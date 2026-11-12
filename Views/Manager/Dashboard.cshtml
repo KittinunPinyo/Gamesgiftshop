@@ -1,0 +1,74 @@
+@model IEnumerable<Gamesgiftshop.Models.Order>
+@{
+    Layout = "_ManagerLayout";
+    ViewData["Title"] = "จัดการบิลคำสั่งซื้อ";
+    var users = ViewBag.Users as List<Gamesgiftshop.Models.User>;
+}
+
+<style>
+    .card-panel { background: #fff; border-radius: 12px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    .table-admin { width: 100%; border-collapse: collapse; }
+    .table-admin th { background: #f7fafc; padding: 15px; text-align: center; border-bottom: 2px solid #e2e8f0; }
+    .table-admin td { padding: 15px; text-align: center; border-bottom: 1px solid #edf2f7; vertical-align: middle; }
+    .btn-update { background: #4a3b8c; color: white; border: none; border-radius: 6px; padding: 6px 15px; font-weight: bold; }
+    .btn-view-slip { background: #ebf4ff; color: #3182ce; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; border: 1px solid #bee3f8;}
+</style>
+
+<div class="container-fluid mt-2">
+    <div class="card-panel">
+        <h3 class="mb-4" style="color: #4a3b8c; font-weight: bold;"><i class="fa-solid fa-file-invoice"></i> จัดการบิลคำสั่งซื้อ</h3>
+        
+        @if (Model != null && Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table-admin">
+                    <thead>
+                        <tr>
+                            <th>รหัสบิล</th>
+                            <th>วันที่สั่งซื้อ</th>
+                            <th>ลูกค้า</th>
+                            <th>ยอดสุทธิ</th>
+                            <th>สถานะ</th>
+                            <th>สลิป</th>
+                            <th>อัปเดตสถานะ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in Model)
+                        {
+                            var customerName = users?.FirstOrDefault(u => u.UserId == order.UserId)?.Username ?? "ไม่ทราบ";
+                            <tr>
+                                <td style="font-weight: bold; color: #4a3b8c;">#@(order.OrderId)</td>
+                                <td style="font-size: 0.9rem;">@order.OrderDate</td>
+                                <td>@customerName</td>
+                                <td style="color: #38a169; font-weight: bold;">฿@order.TotalAmount</td>
+                                <td><span style="background: #f0ebf8; color: #4a3b8c; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem;">@order.Status</span></td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(order.PaymentSlipUrl))
+                                    {
+                                        <a href="@order.PaymentSlipUrl" target="_blank" class="btn-view-slip">ดูสลิป</a>
+                                    }
+                                    else { <span class="text-muted" style="font-size: 0.8rem;">ไม่มีสลิป</span> }
+                                </td>
+                                <td>
+                                    <form method="post" action="/Manager/UpdateOrderStatus" class="d-flex justify-content-center gap-2">
+                                        <input type="hidden" name="orderId" value="@order.OrderId" />
+                                        <select name="newStatus" class="form-select form-select-sm" style="width: auto;">
+                                            <option value="รอตรวจสอบสลิป" selected="@(order.Status == "รอตรวจสอบสลิป")">รอตรวจสอบสลิป</option>
+                                            <option value="ชำระเงินสำเร็จแล้ว" selected="@(order.Status == "ชำระเงินสำเร็จแล้ว")">ชำระเงินสำเร็จแล้ว</option>
+                                        </select>
+                                        <button type="submit" class="btn-update">บันทึก</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5 text-muted">ยังไม่มีคำสั่งซื้อเข้ามาในระบบ</div>
+        }
+    </div>
+</div>

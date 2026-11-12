@@ -1,0 +1,152 @@
+@model Gamesgiftshop.Models.User
+@{
+    ViewData["Title"] = "สมัครสมาชิก";
+}
+
+<style>
+    /* ================= ธีม Modern Minimalist ================= */
+    .auth-wrapper {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 15px;
+    }
+
+    .auth-card {
+        background-color: #16181f; 
+        border: 1px solid #222631;
+        border-radius: 12px;
+        padding: 45px 40px;
+        width: 100%;
+        max-width: 420px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .auth-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #ffffff;
+        text-align: center;
+        margin-bottom: 8px;
+    }
+    
+    .auth-subtitle {
+        font-size: 0.95rem;
+        color: #8b8d9b;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .form-label {
+        color: #e2e8f0;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    /* ================= ช่องกรอกข้อมูล ================= */
+    .input-group-custom { position: relative; margin-bottom: 20px; }
+    .input-group-custom i {
+        position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+        color: #64748b; font-size: 1.1rem; transition: 0.2s;
+    }
+    .form-control-modern {
+        width: 100%;
+        background-color: #222631;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        padding: 12px 15px 12px 45px;
+        color: #ffffff;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+    .form-control-modern:focus {
+        background-color: #1a1d24;
+        border-color: #6366f1;
+    }
+    .form-control-modern:focus + i, .form-control-modern:focus ~ i {
+        color: #6366f1;
+    }
+    .form-control-modern::placeholder { color: #64748b; }
+
+    /* ================= แก้สีไอคอนลูกตารหัสผ่าน (Edge/Windows) ================= */
+    input[type="password"]::-ms-reveal,
+    input[type="password"]::-ms-clear {
+        filter: invert(1) brightness(1.5);
+        opacity: 0.6;
+        cursor: pointer;
+    }
+    input[type="password"]::-ms-reveal:hover {
+        opacity: 1;
+    }
+
+    /* ================= ปุ่มหลัก ================= */
+    .btn-primary-custom {
+        background-color: #6366f1;
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        padding: 12px;
+        width: 100%;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+        margin-top: 10px;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    }
+    .btn-primary-custom:hover {
+        background-color: #4f46e5;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    .auth-link { color: #6366f1; text-decoration: none; font-weight: 500; transition: 0.2s; }
+    .auth-link:hover { color: #818cf8; text-decoration: underline; }
+</style>
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <h2 class="auth-title">สร้างบัญชีใหม่</h2>
+        <p class="auth-subtitle">สมัครสมาชิกเพื่อเข้าถึง GAMES GIFT SHOP</p>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="alert text-center mb-4" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid #f87171; border-radius: 8px; font-weight: 500; font-size: 0.9rem; padding: 10px;">
+                <i class="fa-solid fa-circle-exclamation me-1"></i> @ViewBag.Error
+            </div>
+        }
+
+        <form method="post" asp-action="Register">
+            <label class="form-label">ชื่อผู้ใช้งาน</label>
+            <div class="input-group-custom">
+                <input asp-for="Username" class="form-control-modern" placeholder="ตั้งชื่อผู้ใช้งาน" required />
+                <i class="fa-solid fa-user"></i>
+            </div>
+
+            <label class="form-label">อีเมล</label>
+            <div class="input-group-custom">
+                <input asp-for="Email" type="email" class="form-control-modern" placeholder="example@email.com" required />
+                <i class="fa-solid fa-envelope"></i>
+            </div>
+
+            <label class="form-label">รหัสผ่าน</label>
+            <div class="input-group-custom" style="margin-bottom: 25px;">
+                <!-- ⭐️ เพิ่ม minlength="6" และระบบแจ้งเตือนภาษาไทยตรงนี้ ⭐️ -->
+                <input asp-for="Password" type="password" class="form-control-modern" placeholder="ตั้งรหัสผ่าน 6 ตัวอักษรขึ้นไป" 
+                       minlength="6" 
+                       required 
+                       oninvalid="this.setCustomValidity('กรุณาตั้งรหัสผ่านอย่างน้อย 6 ตัวอักษร')" 
+                       oninput="this.setCustomValidity('')" />
+                <i class="fa-solid fa-lock"></i>
+            </div>
+
+            <button type="submit" class="btn-primary-custom">สมัครสมาชิก</button>
+        </form>
+
+        <div class="text-center mt-4" style="font-size: 0.9rem; color: #8b8d9b;">
+            มีบัญชีผู้ใช้แล้วใช่ไหม? <a asp-action="Login" class="auth-link">เข้าสู่ระบบ</a>
+        </div>
+    </div>
+</div>

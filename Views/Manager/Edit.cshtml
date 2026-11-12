@@ -1,0 +1,179 @@
+@model Gamesgiftshop.Models.Product
+
+@{
+    Layout = "_ManagerLayout";
+    ViewData["Title"] = "แก้ไขสินค้า - Manager";
+    
+    // แปลงสตริง ImageUrl กลับเป็น List เพื่อนำไปสร้างช่องกรอกรูปภาพ
+    var imageUrls = new List<string>();
+    if (!string.IsNullOrEmpty(Model.ImageUrl))
+    {
+        imageUrls = Model.ImageUrl.Split(',').ToList();
+    }
+    if (imageUrls.Count == 0)
+    {
+        imageUrls.Add(""); // มีอย่างน้อย 1 ช่องเสมอ
+    }
+}
+
+<style>
+    .edit-card { background: #ffffff; border-radius: 12px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    .form-control, .form-select { border: 1px solid #cbd5e0; }
+    .form-control:focus, .form-select:focus { border-color: #4a3b8c; box-shadow: 0 0 0 2px rgba(74,59,140,0.2); }
+    .btn-add-img { color: #4a3b8c; font-weight: 600; transition: 0.2s; text-decoration: none; font-size: 0.9rem; }
+    .btn-add-img:hover { color: #322659; text-decoration: underline; }
+</style>
+
+<div class="container mt-4 mb-5" style="max-width: 600px;">
+    <div class="edit-card">
+        <h3 class="fw-bold mb-4 text-center" style="color: #d97706;"><i class="fa-solid fa-pen-to-square"></i> แก้ไขข้อมูลสินค้า</h3>
+
+        <form method="post" asp-controller="Manager" asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            
+            <input type="hidden" asp-for="ProductId" />
+
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label fw-bold">ชื่อสินค้า</label>
+                <input asp-for="Name" class="form-control" placeholder="เช่น ฟิกเกอร์ Mario..." required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">ประเภท / หมวดหมู่</label>
+                
+                <select id="categoryDropdown" class="form-select" onchange="checkCategory()">
+                    <option value="">-- เลือกหมวดหมู่ที่มีอยู่ --</option>
+                    @if (ViewBag.Categories != null)
+                    {
+                        foreach (var cat in ViewBag.Categories)
+                        {
+                            if (!string.IsNullOrEmpty(cat))
+                            {
+                                <option value="@cat">@cat</option>
+                            }
+                        }
+                    }
+                    <option value="NEW" style="color: #4a3b8c; font-weight: bold;">+ เพิ่มหมวดหมู่ใหม่เอง...</option>
+                </select>
+
+                <input type="text" asp-for="Category" id="categoryInput" class="form-control mt-2" placeholder="ระบุชื่อหมวดหมู่ที่ต้องการ..." style="display: none;" required>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Price" class="form-label fw-bold">ราคาขาย (บาท)</label>
+                    <input asp-for="Price" type="number" step="0.01" class="form-control" required />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="OriginalPrice" class="form-label fw-bold">ราคาเต็ม (ถ้ามี)</label>
+                    <input asp-for="OriginalPrice" type="number" step="0.01" class="form-control" />
+                </div>
+            </div>
+
+            <div class="mb-3 p-3" style="background-color: #fffbeb; border: 1px dashed #fbbf24; border-radius: 8px;">
+                <label class="form-label fw-bold">ลิงก์รูปภาพ (Image URLs)</label>
+                
+                <div id="image-inputs-wrapper">
+                    @for (int i = 0; i < imageUrls.Count; i++)
+                    {
+                        <div class="input-group mb-2">
+                            <span class="input-group-text bg-white @(i > 0 ? "text-muted" : "")" style="width: 85px; justify-content: center;">
+                                @(i == 0 ? "รูปหลัก" : $"รูปที่ {i + 1}")
+                            </span>
+                            <!-- ⭐️ เอาคำสั่ง required ออกจากตรงนี้แล้วครับ ⭐️ -->
+                            <input type="url" name="ImageUrls" class="form-control" value="@imageUrls[i]" placeholder="https://...">
+                            
+                            @if (i > 0)
+                            {
+                                <button class="btn btn-outline-danger" type="button" onclick="this.parentElement.remove(); updateImageLabels();" title="ลบรูปนี้">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+                
+                <button type="button" class="btn btn-link btn-add-img p-0 mt-1" onclick="addImageUrl()" style="color: #d97706;">
+                    <i class="fa-solid fa-plus"></i> เพิ่มรูปภาพเพิ่มเติม
+                </button>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="StockQuantity" class="form-label fw-bold">จำนวนสินค้าในสต๊อก</label>
+                    <input asp-for="StockQuantity" type="number" class="form-control" />
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                <a href="/Manager/Products" class="btn btn-outline-secondary px-4">ย้อนกลับ</a>
+                <button type="submit" class="btn btn-warning px-5 fw-bold text-dark">บันทึกการแก้ไข</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function checkCategory() {
+        var dropdown = document.getElementById("categoryDropdown");
+        var input = document.getElementById("categoryInput");
+        
+        if (dropdown.value === "NEW") {
+            input.style.display = "block";
+            input.focus();
+        } else {
+            input.style.display = "none";
+            input.value = dropdown.value; 
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        var dropdown = document.getElementById("categoryDropdown");
+        var input = document.getElementById("categoryInput");
+        var currentCat = input.value;
+        
+        // เช็คว่า Category ปัจจุบันมีในตัวเลือก Dropdown ไหม
+        var exists = false;
+        for(var i = 0; i < dropdown.options.length; i++) {
+            if(dropdown.options[i].value === currentCat && currentCat !== "") {
+                exists = true;
+                break;
+            }
+        }
+        
+        if(exists) {
+            dropdown.value = currentCat;
+            input.style.display = "none";
+        } else {
+            dropdown.value = "NEW";
+            input.style.display = "block";
+        }
+    });
+
+    let imageCount = @imageUrls.Count;
+    function addImageUrl() {
+        imageCount++;
+        const wrapper = document.getElementById('image-inputs-wrapper');
+        
+        const newGroup = document.createElement('div');
+        newGroup.className = 'input-group mb-2';
+        newGroup.innerHTML = `
+            <span class="input-group-text bg-white text-muted" style="width: 85px; justify-content: center;">รูปที่ ${imageCount}</span>
+            <input type="url" name="ImageUrls" class="form-control" placeholder="https://...">
+            <button class="btn btn-outline-danger" type="button" onclick="this.parentElement.remove(); updateImageLabels();" title="ลบรูปนี้">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        `;
+        wrapper.appendChild(newGroup);
+    }
+
+    function updateImageLabels() {
+        const groups = document.querySelectorAll('#image-inputs-wrapper .input-group');
+        imageCount = groups.length;
+        groups.forEach((group, index) => {
+            if (index > 0) {
+                group.querySelector('.input-group-text').textContent = `รูปที่ ${index + 1}`;
+            }
+        });
+    }
+</script>

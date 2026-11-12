@@ -1,0 +1,398 @@
+﻿@model IEnumerable<Gamesgiftshop.Models.Product>
+
+@{
+    ViewData["Title"] = "หน้าแรก - Games Gift Shop";
+    
+    // ดึงชื่อหมวดหมู่ทั้งหมดจากสินค้าที่มีอยู่ใน Database แบบไม่ซ้ำกัน (ลบค่าว่างออก)
+    var activeCategories = Model != null 
+        ? Model.Select(p => p.Category).Where(c => !string.IsNullOrWhiteSpace(c)).Distinct().ToList() 
+        : new List<string>();
+}
+
+<style>
+    /* ================= Hero Banner (Flash Sale) ================= */
+    .hero-banner {
+        background: linear-gradient(135deg, #7b2cbf 0%, #f72585 100%);
+        border-radius: 16px; 
+        padding: 50px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(123, 44, 191, 0.2);
+    }
+    
+    .hero-btn {
+        background-color: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        color: white;
+        border-radius: 50px;
+        transition: 0.3s;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .hero-btn:hover {
+        background-color: white;
+        color: #7b2cbf;
+    }
+
+    /* ================= Feature Tags & Category Pills ================= */
+    .feature-tag {
+        background-color: #16181f;
+        border: 1px solid #222631;
+        border-radius: 50px;
+        padding: 8px 20px;
+        font-size: 0.85rem;
+        color: #cbd5e1;
+        display: inline-block;
+        margin-right: 10px;
+        margin-bottom: 10px;
+    }
+
+    .category-pill {
+        background-color: #16181f;
+        border: 1px solid #222631;
+        color: #cbd5e1;
+        border-radius: 50px;
+        padding: 6px 16px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: 0.3s;
+        text-decoration: none;
+        user-select: none;
+    }
+    .category-pill.active {
+        background-color: #6366f1; 
+        color: white;
+        border-color: #6366f1;
+    }
+    .category-pill:hover:not(.active) {
+        background-color: #222631;
+        color: white;
+    }
+
+    /* ================= Product Cards ================= */
+    .product-card {
+        background-color: #16181f;
+        border-radius: 12px;
+        border: 1px solid #222631;
+        overflow: hidden;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3);
+        border-color: #6366f1;
+    }
+    
+    .product-img {
+        height: 240px;
+        width: 100%;
+        object-fit: cover;
+        border-radius: 12px 12px 0 0;
+        transition: 0.3s;
+    }
+    .product-card:hover .product-img {
+        transform: scale(1.03);
+    }
+
+    /* 🏷️ ป้ายสถานะ (ซ้ายบน) */
+    .badge-status {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: white;
+        z-index: 2;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    .bg-bestseller { background: linear-gradient(135deg, #d946ef 0%, #c026d3 100%); } 
+    .bg-hot { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); } 
+    .bg-new { background: linear-gradient(135deg, #10b981 0%, #059669 100%); } 
+
+    /* ป้าย Badge (ส่วนลดขวาบน) */
+    .badge-discount {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background-color: rgba(34, 38, 49, 0.95);
+        border-radius: 20px;
+        padding: 4px 10px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #fbbf24;
+        z-index: 2;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    }
+    
+    /* ปุ่มหัวใจ */
+    .btn-heart {
+        position: absolute;
+        bottom: 12px;
+        right: 12px;
+        background-color: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255,255,255,0.4);
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        z-index: 2;
+        backdrop-filter: blur(5px);
+        transition: 0.3s;
+        cursor: pointer;
+    }
+    .btn-heart:hover {
+        background-color: rgba(255, 255, 255, 0.9);
+        color: #ef4444;
+    }
+    
+    /* ปุ่มเพิ่มในตะกร้า */
+    .btn-cart {
+        background-color: #6366f1; 
+        color: white;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: bold;
+        transition: 0.2s;
+        border: none;
+        padding: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-cart:hover {
+        background-color: #4f46e5;
+        color: white;
+    }
+    
+    /* ================= Flash Deal Banner (Bottom) ================= */
+    .flash-deal-banner {
+        background-color: #16181f;
+        border-radius: 12px;
+        padding: 24px 32px;
+        margin-top: 50px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid #222631;
+    }
+    .btn-copy-code {
+        background: linear-gradient(90deg, #f88a4d 0%, #ee5575 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 24px;
+        font-size: 0.9rem;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+    .btn-copy-code:hover {
+        transform: scale(1.05);
+        color: white;
+        box-shadow: 0 4px 15px rgba(238, 85, 117, 0.4);
+    }
+</style>
+
+<div class="container mt-4 mb-5">
+    
+    <!-- 1. Hero Banner Flash Sale -->
+    <div class="hero-banner mb-4 d-flex align-items-center">
+        <div class="z-1">
+            <span class="badge bg-light text-dark rounded-pill mb-3 px-3 py-2 opacity-75">
+                ⏳ 24 ชั่วโมงเท่านั้น
+            </span>
+            <h1 class="fw-bold display-4 mb-2 text-white">Flash Sale<br>ลดสูงสุด 50%</h1>
+            <p class="mb-4 text-white">สินค้าลิขสิทธิ์แท้จากทั่วโลก วันนี้เท่านั้น!</p>
+            <a href="/Product" class="btn hero-btn px-4 py-2">ช้อปเลย →</a>
+        </div>
+    </div>
+
+    <!-- 2. Feature Tags -->
+    <div class="mb-5">
+        <div class="feature-tag">⚡ ส่งฟรีทั่วไทย</div>
+        <div class="feature-tag">🛡️ ของแท้ 100%</div>
+        <div class="feature-tag">💳 คืนเงินภายใน 7 วัน</div>
+    </div>
+
+    <!-- 3. Trending & Categories -->
+    <div class="d-flex justify-content-between align-items-center mb-4 mt-5">
+        <h4 class="fw-bold text-white mb-0">แนะนำสำหรับคุณ</h4>
+        <a href="/Product" style="color: #6366f1; text-decoration: none; font-size: 0.9rem;">ดูทั้งหมด →</a>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mb-4" id="category-filters">
+        <a href="#" class="category-pill active" data-category="ทั้งหมด">ทั้งหมด</a>
+        
+        @foreach (var cat in activeCategories)
+        {
+            string icon = "🏷️"; // ไอคอนพื้นฐานสำหรับหมวดหมู่ใหม่
+            if (cat == "ฟิกเกอร์") icon = "🧸";
+            else if (cat == "เสื้อผ้า") icon = "👕";
+            else if (cat == "โปสเตอร์") icon = "🖼️";
+            else if (cat == "พวงกุญแจ") icon = "🔑";
+            else if (cat == "อุปกรณ์เสริม") icon = "🎮";
+
+            <a href="#" class="category-pill" data-category="@cat">@icon @cat</a>
+        }
+    </div>
+
+    <!-- 4. Product Grid -->
+    <div class="row row-cols-1 row-cols-md-3 row-cols-xl-5 g-4 mb-5" id="product-list">
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var item in Model)
+            {
+                // ตรวจสอบเงื่อนไขการแสดงป้าย ซ้ายบน
+                string badgeText = "";
+                string badgeClass = "";
+                
+                if (item.ReviewCount > 150) {
+                    badgeText = "ขายดี";
+                    badgeClass = "bg-bestseller";
+                } else if (item.ReviewCount > 50) {
+                    badgeText = "ฮิต";
+                    badgeClass = "bg-hot";
+                } else if (item.ReviewCount < 10) { 
+                    badgeText = "ใหม่";
+                    badgeClass = "bg-new";
+                }
+
+                <div class="col product-item" data-category="@item.Category">
+                    <div class="card h-100 product-card border-0 text-white">
+                        
+                        <!-- 🔗 รูปภาพและส่วนลด -->
+                        <a href="/Product/Details/@item.ProductId" class="position-relative d-block">
+                            
+                            @if (!string.IsNullOrEmpty(badgeText))
+                            {
+                                <span class="badge-status @badgeClass">@badgeText</span>
+                            }
+
+                            @if (item.OriginalPrice.HasValue && item.OriginalPrice > item.Price)
+                            {
+                                var discount = Math.Round((1 - (item.Price / item.OriginalPrice.Value)) * 100);
+                                <span class="badge-discount">-@discount%</span>
+                            }
+                            
+                            <div class="btn-heart">🤍</div>
+                            
+                            <img src="@(string.IsNullOrEmpty(item.ImageUrl) ? "https://via.placeholder.com/400x400?text=No+Image" : item.ImageUrl)" class="card-img-top product-img" alt="@item.Name">
+                        </a>
+                        
+                        <!-- ข้อมูลสินค้า -->
+                        <div class="card-body d-flex flex-column p-3 bg-transparent">
+                            <small style="color: #6366f1; font-size: 0.75rem; font-weight: 600; margin-bottom: 6px;">@item.Category</small>
+                            
+                            <a href="/Product/Details/@item.ProductId" class="text-decoration-none">
+                                <h6 class="card-title fw-bold text-white text-truncate mb-2" style="font-size: 1rem;" title="@item.Name">@item.Name</h6>
+                            </a>
+                            
+                            <div class="rating mb-3" style="color: #fbbf24; font-size: 0.85rem;">
+                                ★★★★★ <span style="color: #64748b; font-size: 0.75rem; margin-left: 4px;">(@item.ReviewCount)</span>
+                            </div>
+
+                            <div class="mt-auto d-flex align-items-baseline mb-3">
+                                <h4 class="fw-bold text-white mb-0 me-2">฿@item.Price.ToString("N0")</h4>
+                                
+                                @if (item.OriginalPrice.HasValue && item.OriginalPrice > item.Price)
+                                {
+                                    <small class="text-decoration-line-through" style="color: #64748b; font-size: 0.85rem;">฿@item.OriginalPrice.Value.ToString("N0")</small>
+                                }
+                            </div>
+                            
+                            <!-- ฟอร์มปุ่มเพิ่มลงตะกร้า (แก้ไขเพิ่มไอคอนแล้ว) -->
+                            <form action="/Cart/Add" method="post" class="w-100 mb-0">
+                                <input type="hidden" name="productId" value="@item.ProductId" />
+                                <button type="submit" class="btn btn-cart w-100">
+                                    <i class="fa-solid fa-cart-plus me-1"></i> หยิบใส่ตะกร้า
+                                </button>
+                            </form>
+                        </div>
+                        
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12 text-center py-4 w-100">
+                <p class="text-muted" style="color: #cbd5e1 !important;">ยังไม่มีสินค้าในระบบ</p>
+            </div>
+        }
+        
+        <div id="no-product-msg" class="col-12 text-center py-5 w-100" style="display: none;">
+            <h5 style="color: #cbd5e1;">❌ ไม่มีสินค้าในหมวดหมู่นี้</h5>
+        </div>
+    </div>
+
+    <!-- 5. Flash Deal Banner -->
+    <div class="flash-deal-banner flex-column flex-md-row text-center text-md-start gap-3 mt-5">
+        <div class="d-flex align-items-center justify-content-center justify-content-md-start">
+            <div class="fs-2 me-3">⏰</div>
+            <div>
+                <h5 class="fw-bold text-white mb-1">Flash Deal วันนี้เท่านั้น!</h5>
+                <p class="mb-0" style="color: #cbd5e1; font-size: 0.85rem;">
+                    ใช้โค้ด <span class="text-warning fw-bold">GAME150</span> รับส่วนลดทันที ฿150 สำหรับลูกค้าใหม่
+                </p>
+            </div>
+        </div>
+        <button class="btn btn-copy-code" onclick="copyCode('GAME150')">คัดลอกโค้ด 📋</button>
+    </div>
+
+</div>
+
+<!-- Scripts สำหรับ Category Filter และ Copy Code -->
+<script>
+    function copyCode(code) {
+        navigator.clipboard.writeText(code).then(() => {
+            alert('คัดลอกโค้ด ' + code + ' ลงคลิปบอร์ดแล้ว!');
+        }).catch(err => {
+            console.error('ไม่สามารถคัดลอกข้อความได้: ', err);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const categoryPills = document.querySelectorAll('.category-pill');
+        const productItems = document.querySelectorAll('.product-item');
+        const noProductMsg = document.getElementById('no-product-msg');
+
+        categoryPills.forEach(pill => {
+            pill.addEventListener('click', function(e) {
+                e.preventDefault(); 
+                
+                // ถอดคลาส active ออกจากทุกปุ่ม แล้วใส่ให้ปุ่มที่ถูกคลิก
+                categoryPills.forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+
+                const selectedCategory = this.getAttribute('data-category');
+                let visibleCount = 0;
+
+                // วนลูปเช็คหมวดหมู่สินค้า
+                productItems.forEach(item => {
+                    const itemCategory = item.getAttribute('data-category');
+                    if (selectedCategory === "ทั้งหมด" || selectedCategory === itemCategory) {
+                        item.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        item.style.display = 'none'; 
+                    }
+                });
+
+                // แสดงข้อความถ้าไม่มีสินค้าในหมวดหมู่นั้น
+                if(visibleCount === 0 && productItems.length > 0) {
+                    noProductMsg.style.display = 'block';
+                } else {
+                    noProductMsg.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>

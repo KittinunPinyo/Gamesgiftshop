@@ -1,0 +1,201 @@
+@* เรียกใช้ Model CartViewModel จาก Controller ของคุณ *@
+@model Gamesgiftshop.Controllers.CartViewModel
+
+@* นำเข้า Namespace และ Inject Database เพื่อดึงข้อมูลสต็อกสินค้ามาเช็ค *@
+@using Gamesgiftshop.Models
+@inject Csi402dbContext _db
+
+@{
+    ViewData["Title"] = "ตะกร้าสินค้า - Games Gift Shop";
+    
+    // เช็คว่า Model ถูกส่งมาไหม และมีสินค้าใน Items หรือเปล่า
+    bool isCartEmpty = Model == null || Model.Items == null || !Model.Items.Any();
+}
+
+<style>
+    /* ================= ธีม Dark Minimalist ================= */
+    body { background-color: #0f1115; color: #e2e8f0; }
+    
+    .page-title-cart { color: #ffffff; font-weight: 800; font-size: 1.8rem; display: flex; align-items: center; gap: 12px; margin-bottom: 30px; letter-spacing: 0.5px; }
+    .page-title-cart::before { content: ''; display: inline-block; width: 6px; height: 24px; background: linear-gradient(180deg, #6366f1 0%, #a855f7 100%); border-radius: 4px; }
+
+    .cart-card { background-color: #16181f; border: 1px solid #222631; border-radius: 16px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+
+    .empty-cart-container { text-align: center; padding: 60px 20px; }
+    .empty-cart-icon { font-size: 4.5rem; color: #222631; margin-bottom: 20px; }
+    .empty-cart-text { font-size: 1.2rem; font-weight: 700; color: #94a3b8; margin-bottom: 25px; }
+    .btn-goshop { background-color: #222631; color: #ffffff; border: 1px solid #334155; border-radius: 10px; padding: 12px 30px; font-weight: 600; text-decoration: none; transition: 0.3s; display: inline-block; }
+    .btn-goshop:hover { background-color: #6366f1; border-color: #6366f1; color: white; transform: translateY(-2px); }
+
+    .cart-item-row { display: flex; align-items: center; padding: 20px 0; border-bottom: 1px solid #222631; }
+    .cart-item-row:last-child { border-bottom: none; padding-bottom: 0; }
+    
+    .item-img { width: 80px; height: 80px; object-fit: cover; border-radius: 10px; background-color: #0f1115; }
+    .item-details { flex-grow: 1; padding: 0 20px; }
+    .item-name { color: #ffffff; font-weight: 700; font-size: 1.05rem; margin-bottom: 5px; text-decoration: none; display: block; transition: 0.2s; }
+    .item-name:hover { color: #6366f1; }
+    .item-category { color: #64748b; font-size: 0.8rem; }
+    
+    .qty-controls { display: flex; align-items: center; background-color: #0f1115; border: 1px solid #222631; border-radius: 8px; overflow: hidden; margin-right: 20px; }
+    .btn-qty { background: transparent; border: none; color: #94a3b8; width: 32px; height: 32px; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
+    .btn-qty:hover:not(:disabled) { background: #222631; color: white; }
+    .btn-qty:disabled { opacity: 0.3; cursor: not-allowed; } /* ทำให้ปุ่มจางลงเมื่อกดไม่ได้ */
+    .qty-input { background: transparent; border: none; color: white; width: 40px; text-align: center; font-weight: 600; outline: none; }
+    
+    .item-price { font-weight: 700; color: #ffffff; width: 100px; text-align: right; }
+    .btn-remove { color: #ef4444; background: transparent; border: none; font-size: 1.2rem; margin-left: 20px; transition: 0.2s; opacity: 0.7; text-decoration: none; display: flex; align-items: center; }
+    .btn-remove:hover { opacity: 1; transform: scale(1.1); color: #ef4444; }
+
+    .summary-title { color: #ffffff; font-size: 1.2rem; font-weight: 800; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #222631; }
+    .summary-row { display: flex; justify-content: space-between; margin-bottom: 15px; color: #94a3b8; font-size: 0.95rem; }
+    .summary-val { color: #ffffff; font-weight: 600; }
+    .val-discount { color: #ef4444; }
+    .val-shipping { color: #10b981; }
+
+    .summary-total-row { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 25px; padding-top: 20px; border-top: 1px dashed #334155; }
+    .total-label { color: #ffffff; font-weight: 800; font-size: 1.1rem; }
+    .total-sub { font-size: 0.7rem; color: #64748b; font-weight: 400; display: block; margin-top: 4px; }
+    .total-price { color: #6366f1; font-weight: 900; font-size: 1.8rem; line-height: 1; }
+
+    .promo-box { display: flex; gap: 10px; margin-top: 25px; }
+    .promo-input { background-color: #0f1115; border: 1px solid #222631; color: white; border-radius: 8px; padding: 12px 15px; flex-grow: 1; outline: none; font-size: 0.9rem; transition: 0.2s; }
+    .promo-input:focus { border-color: #6366f1; }
+    .btn-promo { background-color: #6366f1; color: white; border: none; border-radius: 8px; padding: 0 20px; font-weight: 700; transition: 0.2s; }
+    .btn-promo:hover { background-color: #4f46e5; }
+
+    .btn-checkout { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: white; width: 100%; border: none; border-radius: 10px; padding: 16px; font-weight: 800; font-size: 1.1rem; transition: 0.3s; margin-top: 20px; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); display: flex; justify-content: center; align-items: center; gap: 10px; }
+    .btn-checkout:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4); }
+
+    .payment-support { text-align: center; margin-top: 25px; }
+    .payment-support p { color: #64748b; font-size: 0.75rem; margin-bottom: 10px; }
+    .payment-badges { display: flex; justify-content: center; gap: 8px; }
+    .badge-pay { background-color: #0f1115; border: 1px solid #222631; color: #94a3b8; font-size: 0.7rem; padding: 6px 10px; border-radius: 6px; font-weight: 600; }
+</style>
+
+<div class="container mt-4 mb-5">
+    
+    <h1 class="page-title-cart">ตะกร้าสินค้าของฉัน</h1>
+
+    <div class="row g-4">
+        
+        <!-- ================= ด้านซ้าย: รายการสินค้า ================= -->
+        <div class="col-lg-8">
+            <div class="cart-card h-100">
+                
+                @if (isCartEmpty)
+                {
+                    <div class="empty-cart-container d-flex flex-column justify-content-center h-100">
+                        <i class="fa-solid fa-cart-arrow-down empty-cart-icon"></i>
+                        <h4 class="empty-cart-text">ไม่มีสินค้าในตะกร้า</h4>
+                        <div>
+                            <a href="/Product" class="btn-goshop">
+                                <i class="fa-solid fa-arrow-left me-2"></i> กลับไปเลือกซื้อสินค้า
+                            </a>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <!-- วนลูปดึงรายการสินค้าจาก Items (CartItemViewModel) -->
+                    @foreach (var item in Model.Items)
+                    {
+                        // ดึงข้อมูลสินค้าจาก Database เพื่อเช็ค StockQuantity ปัจจุบัน
+                        var dbProduct = _db.Products.FirstOrDefault(p => p.ProductId == item.ProductId);
+                        int currentStock = dbProduct != null ? (dbProduct.StockQuantity ?? 0) : 0;
+
+                        <div class="cart-item-row">
+                            <img src="@item.ImageUrl" alt="@item.Name" class="item-img">
+                            
+                            <div class="item-details">
+                                <a href="/Product/Details/@item.ProductId" class="item-name">@item.Name</a>
+                                <span class="item-category">@item.Category</span>
+                            </div>
+                            
+                            <!-- ฟอร์มสำหรับปรับเพิ่ม/ลดจำนวนสินค้า -->
+                            <form action="/Cart/UpdateQty" method="post" class="qty-controls mb-0">
+                                <input type="hidden" name="productId" value="@item.ProductId" />
+                                
+                                <!-- ปุ่มลดจำนวน (ปิดใช้งานถ้าจำนวน = 1) -->
+                                <button type="submit" name="quantity" value="@(item.Quantity - 1)" class="btn-qty" @(item.Quantity <= 1 ? "disabled" : "")>
+                                    <i class="fa-solid fa-minus"></i>
+                                </button>
+                                
+                                <input type="text" class="qty-input" value="@item.Quantity" readonly>
+                                
+                                <!-- ปุ่มเพิ่มจำนวน (ปิดใช้งานถ้าจำนวน >= สต็อกที่มี) -->
+                                <button type="submit" name="quantity" value="@(item.Quantity + 1)" class="btn-qty" @(item.Quantity >= currentStock ? "disabled" : "") title="@(item.Quantity >= currentStock ? "สินค้าหมดสต๊อก" : "")">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </form>
+                            
+                            <!-- ราคารวมของสินค้ารายการนี้ -->
+                            <div class="item-price">฿@item.Total.ToString("N0")</div>
+                            
+                            <!-- ปุ่มลบสินค้าออกจากตะกร้า -->
+                            <a href="/Cart/Remove?productId=@item.ProductId" class="btn-remove" title="ลบสินค้า">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </a>
+                        </div>
+                    }
+                }
+
+            </div>
+        </div>
+
+        <!-- ================= ด้านขวา: สรุปคำสั่งซื้อ ================= -->
+        <div class="col-lg-4">
+            <div class="cart-card">
+                <h3 class="summary-title">สรุปคำสั่งซื้อ (Order Summary)</h3>
+
+                <div class="summary-row">
+                    <span>ยอดรวมสินค้า (Subtotal)</span>
+                    <span class="summary-val">฿@(Model?.Subtotal.ToString("N0") ?? "0")</span>
+                </div>
+                
+                <div class="summary-row">
+                    <span>ส่วนลด (Discount)</span>
+                    <span class="summary-val val-discount">- ฿@(Model?.Discount.ToString("N0") ?? "0")</span>
+                </div>
+                
+                <div class="summary-row">
+                    <span>ค่าจัดส่ง (Shipping)</span>
+                    <span class="summary-val val-shipping">+ ฿@(isCartEmpty ? "0" : Model?.Shipping.ToString("N0"))</span>
+                </div>
+
+                <div class="summary-total-row">
+                    <div>
+                        <span class="total-label">ยอดรวมสุทธิ</span>
+                        <span class="total-sub">(รวมภาษีมูลค่าเพิ่มแล้ว)</span>
+                    </div>
+                    <div class="total-price">
+                        ฿@(isCartEmpty ? "0" : Model?.GrandTotal.ToString("N0"))
+                    </div>
+                </div>
+
+                <!-- ฟอร์มโค้ดส่วนลด -->
+                <form action="/Cart/ApplyPromo" method="post" class="promo-box">
+                    <input type="text" name="promoCode" class="promo-input" placeholder="กรอกโค้ดส่วนลด..." disabled="@isCartEmpty">
+                    <button type="submit" class="btn-promo" disabled="@isCartEmpty">ใช้</button>
+                </form>
+
+                <!-- ปุ่มชำระเงิน -->
+                <form action="/Cart/Checkout" method="get">
+                    <button type="submit" class="btn-checkout" disabled="@isCartEmpty" style="@(isCartEmpty ? "opacity: 0.5; cursor: not-allowed;" : "")">
+                        <i class="fa-regular fa-credit-card"></i> ดำเนินการชำระเงิน
+                    </button>
+                </form>
+
+                <!-- โลโก้ช่องทางชำระเงิน -->
+                <div class="payment-support">
+                    <p>รองรับการชำระเงินผ่าน</p>
+                    <div class="payment-badges">
+                        <span class="badge-pay">QR PromptPay</span>
+                        <span class="badge-pay">Mobile Banking</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>

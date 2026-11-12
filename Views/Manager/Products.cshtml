@@ -1,0 +1,183 @@
+@model IEnumerable<Gamesgiftshop.Models.Product>
+@{
+    Layout = "_ManagerLayout";
+    ViewData["Title"] = "แคตตาล็อกสินค้า";
+}
+
+<style>
+    .card-panel {
+        background: #fff;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .table-admin {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table-admin th {
+        background: #f7fafc;
+        padding: 15px;
+        border-bottom: 2px solid #e2e8f0;
+        color: #4a5568;
+    }
+
+    .table-admin td {
+        padding: 15px;
+        border-bottom: 1px solid #edf2f7;
+        vertical-align: middle;
+        color: #2d3748;
+    }
+
+    .btn-add {
+        background: #38a169;
+        color: white;
+        text-decoration: none;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+
+    .btn-add:hover {
+        background: #2f855a;
+        color: white;
+    }
+
+    .btn-edit {
+        background: #ecc94b;
+        color: #744210;
+        padding: 6px 12px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .btn-edit:hover {
+        background: #d69e2e;
+        color: #744210;
+    }
+
+    .btn-delete {
+        background: #e53e3e;
+        color: white;
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .btn-delete:hover {
+        background: #c53030;
+    }
+
+    .status-badge {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+</style>
+
+<div class="container-fluid mt-2">
+    <div class="card-panel">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 style="color: #4a3b8c; font-weight: bold;"><i class="fa-solid fa-box-open"></i> จัดการแคตตาล็อกสินค้า
+            </h3>
+            <a href="/Manager/Create" class="btn-add">+ เพิ่มสินค้าใหม่</a>
+        </div>
+
+        @if (Model != null && Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table-admin text-center">
+                    <thead>
+                        <tr>
+                            <th>รูปภาพ</th>
+                            <th class="text-start">ชื่อสินค้า</th>
+                            <th>หมวดหมู่</th>
+                            <th>ราคาขาย</th>
+                            <th>สต๊อก</th>
+                            <th>จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <img src="@item.ImageUrl"
+                                         style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;"
+                                         onerror="this.src='https://via.placeholder.com/50'" />
+                                </td>
+                                <td class="text-start fw-bold">@item.Name</td>
+                                <td>
+                                    <span
+                                    style="background: #e2e8f0; color: #4a5568; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem;">@item.Category</span>
+                                </td>
+                                <td style="color: #38a169; font-weight: bold;">฿@item.Price</td>
+                                <td>
+                                    <span
+                                        class="status-badge @(item.StockQuantity > 0 ? "bg-success text-white" : "bg-warning text-dark")">
+                                        @item.StockQuantity
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <a href="/Manager/Edit/@item.ProductId" class="btn btn-sm btn-warning">
+                                            <i class="fa-solid fa-pen-to-square"></i> แก้ไข
+                                        </a>
+                                        
+                                        <!-- ฟอร์มปุ่มลบ -->
+                                        <form id="deleteForm-@item.ProductId" action="/Manager/DeleteProduct" method="post"
+                                              class="d-inline">
+                                            <input type="hidden" name="id" value="@item.ProductId" />
+                                            <button type="button" class="btn btn-sm btn-danger"
+                                                    onclick="confirmDelete(@item.ProductId, '@item.Name')">
+                                                <i class="fa-solid fa-trash"></i> ลบ
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="fa-solid fa-box-open mb-3" style="font-size: 3rem; color: #cbd5e0;"></i>
+                <p class="text-muted">ยังไม่มีสินค้าในระบบ กรุณากดปุ่ม <b>+ เพิ่มสินค้าใหม่</b></p>
+            </div>
+        }
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function confirmDelete(productId, productName) {
+        Swal.fire({
+            title: 'ยืนยันการลบสินค้า?',
+            html: `คุณกำลังจะลบ <b>${productName}</b><br>ข้อมูลนี้จะไม่สามารถกู้คืนได้!`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444', // สีปุ่มยืนยัน (แดง)
+            cancelButtonColor: '#64748b',  // สีปุ่มยกเลิก (เทา)
+            confirmButtonText: '<i class="fa-solid fa-trash"></i> ลบเลย!',
+            cancelButtonText: 'ยกเลิก',
+            shape: 'rounded',
+            reverseButtons: true // สลับปุ่มยกเลิกมาไว้ด้านซ้าย
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // ถ้ายืนยัน ให้สั่ง Submit ฟอร์มลบของสินค้านั้น
+                document.getElementById('deleteForm-' + productId).submit();
+            }
+        });
+    }
+</script>

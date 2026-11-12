@@ -1,0 +1,180 @@
+﻿@using Microsoft.AspNetCore.Http
+@using System.Text.Json
+@using Gamesgiftshop.Controllers
+
+@{
+    // คำนวณจำนวนสินค้าในตะกร้าจาก Session
+    int cartItemCount = 0;
+    
+    // จำลองการสร้าง Session Key ให้ตรงกับใน CartController
+    var username = User.Identity != null && User.Identity.IsAuthenticated ? User.Identity.Name : "Guest";
+    var sessionKey = $"CartSession_{username}";
+    
+    // ดึงค่าตะกร้าจาก Session
+    var sessionCart = Context.Session.GetString(sessionKey);
+    if (!string.IsNullOrEmpty(sessionCart))
+    {
+        try 
+        {
+            var cartItems = JsonSerializer.Deserialize<List<CartItemViewModel>>(sessionCart);
+            if (cartItems != null)
+            {
+                // รวมจำนวน (Quantity) ของสินค้าทุกชิ้นในตะกร้า
+                cartItemCount = cartItems.Sum(i => i.Quantity); 
+            }
+        } 
+        catch { /* ป้องกัน Error กรณี Deserialize ไม่ผ่าน */ }
+    }
+}
+
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Games Gift Shop</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Gamesgiftshop.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        html, body { height: 100%; margin: 0; }
+        body { display: flex; flex-direction: column; background-color: #0f1115; color: #e2e8f0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .main-wrapper { flex: 1 0 auto; }
+
+        /* Navbar */
+        .custom-navbar { background-color: #16181f !important; border-bottom: 1px solid #222631 !important; padding: 15px 0; }
+        .navbar-brand-custom { display: flex; align-items: center; gap: 12px; text-decoration: none; transition: 0.2s; }
+        .navbar-brand-custom:hover { opacity: 0.8; }
+        .navbar-brand-icon { background: #6366f1; border-radius: 8px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: #ffffff; }
+        .navbar-brand-text { display: flex; flex-direction: column; line-height: 1.2; }
+        .brand-title { font-weight: 800; color: #ffffff; font-size: 1.05rem; letter-spacing: 0.5px; }
+        .brand-subtitle { font-weight: 600; color: #8b8d9b; font-size: 0.75rem; letter-spacing: 1px; }
+
+        /* Search */
+        .search-wrapper { flex: 1; max-width: 500px; margin: 0 30px; }
+        .search-box { background-color: #222631; border: 1px solid transparent; border-radius: 8px; padding: 9px 20px; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
+        .search-box:focus-within { background-color: #1a1d24; border-color: #6366f1; }
+        .search-box input { background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 0.95rem; }
+        .search-box input::placeholder { color: #64748b; }
+        .search-icon { color: #64748b; font-size: 1rem; }
+        .search-box:focus-within .search-icon { color: #6366f1; }
+
+        /* Actions */
+        .nav-actions { display: flex; align-items: center; gap: 20px; }
+        .action-item { color: #cbd5e1; text-decoration: none; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 500; transition: 0.2s; padding: 8px 12px; border-radius: 8px; }
+        .action-item:hover { color: #ffffff; background-color: #222631; }
+        .action-icon { font-size: 1.1rem; position: relative; }
+        .cart-badge { position: absolute; top: -6px; right: -8px; background-color: #ef4444; color: white; font-size: 0.7rem; font-weight: bold; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border: 2px solid #16181f; }
+
+        /* ปุ่มเข้าสู่ระบบ */
+        .btn-login { background-color: #ffffff; color: #0f1115 !important; border: 1px solid #ffffff; border-radius: 8px; padding: 9px 24px; font-weight: 700; font-size: 0.95rem; transition: all 0.2s ease; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15); }
+        .btn-login:hover { background-color: #f1f5f9; color: #000000 !important; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(255, 255, 255, 0.25); }
+        
+        /* ================= ปุ่มออกจากระบบ (Navbar) ================= */
+        .btn-nav-logout { background-color: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 8px 18px; font-weight: 600; font-size: 0.9rem; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-nav-logout:hover { background-color: #ef4444; color: #ffffff; border-color: #ef4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); transform: translateY(-2px); }
+
+        /* Footer */
+        .footer-custom { flex-shrink: 0; background-color: #16181f; border-top: 1px solid #222631; padding: 24px 0; text-align: center; color: #64748b; font-size: 0.9rem; }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg custom-navbar mb-4">
+            <div class="container">
+                <a class="navbar-brand-custom" asp-area="" asp-controller="Home" asp-action="Index">
+                    <div class="navbar-brand-icon"><i class="fa-solid fa-gamepad"></i></div>
+                    <div class="navbar-brand-text">
+                        <span class="brand-title">GAMES</span>
+                        <span class="brand-subtitle">GIFT SHOP</span>
+                    </div>
+                </a>
+
+                <button class="navbar-toggler border-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                    <i class="fa-solid fa-bars text-light"></i>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarContent">
+                    
+                    <!-- ================= ซ่อนช่องค้นหา ถ้ายังไม่ล็อกอิน ================= -->
+                    @if (User.Identity != null && User.Identity.IsAuthenticated)
+                    {
+                        <div class="search-wrapper mx-auto my-3 my-lg-0">
+                            <form action="/Product/Index" method="get">
+                                <div class="search-box">
+                                    <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+                                    <input type="search" name="search" placeholder="ค้นหาสินค้า..." value="@Context.Request.Query["search"]">
+                                </div>
+                            </form>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- ใส่ div ว่างไว้ดันปุ่มเข้าสู่ระบบไปชิดขวาตอนช่องค้นหาหายไป -->
+                        <div class="mx-auto"></div>
+                    }
+                    <!-- ========================================================== -->
+
+                    <div class="nav-actions ms-auto justify-content-center mt-3 mt-lg-0 align-items-center d-flex">
+                        @if (User.Identity != null && User.Identity.IsAuthenticated)
+                        {
+                            <!-- ปุ่มเพิ่มสินค้าของ Manager -->
+                            @if (User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value == "Manager")
+                            {
+                                <a href="/Manager/AddProduct" class="action-item" style="color: #fbbf24;" title="เพิ่มสินค้าใหม่">
+                                    <i class="fa-solid fa-screwdriver-wrench action-icon"></i>
+                                    <span class="d-none d-lg-inline">เพิ่มสินค้า</span>
+                                </a>
+                            }
+
+                            <a href="/Cart" class="action-item" title="ตะกร้าสินค้า">
+                                <div class="action-icon">
+                                    <i class="fa-solid fa-cart-shopping"></i>
+                                    <!-- ⭐️ เปลี่ยนตรงนี้เป็น @cartItemCount -->
+                                    @if (cartItemCount > 0)
+                                    {
+                                        <span class="cart-badge">@cartItemCount</span>
+                                    }
+                                </div>
+                            </a>
+                            <a href="/Account/Profile" class="action-item" title="โปรไฟล์ของคุณ">
+                                <i class="fa-solid fa-circle-user action-icon"></i>
+                                <span class="text-truncate" style="max-width: 150px;">@User.Identity.Name</span>
+                            </a>
+                            <form action="/Account/Logout" method="post" class="d-inline mb-0">
+                                <button type="submit" class="btn-nav-logout">
+                                    <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a href="/Account/Login" class="btn-login"><i class="fa-solid fa-right-to-bracket"></i> เข้าสู่ระบบ</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+    
+    <div class="container main-wrapper">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="footer-custom w-100">
+        <div class="container">© 2026 GAMES GIFT SHOP • สินค้าของแท้ 100% • บริการด้วยใจ</div>
+    </footer>
+    
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

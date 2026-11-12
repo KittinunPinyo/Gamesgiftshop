@@ -1,0 +1,306 @@
+@model IEnumerable<Gamesgiftshop.Models.Product>
+
+@{
+    ViewData["Title"] = "สินค้าทั้งหมด - Games Gift Shop";
+    
+    // รับค่าที่ค้นหาจาก URL (ถ้ามี)
+    string currentSearch = Context.Request.Query["search"];
+    string currentCategory = Context.Request.Query["category"];
+    string currentSort = Context.Request.Query["sort"];
+}
+
+<style>
+    /* ================= ธีม Dark Minimalist ================= */
+    body { background-color: #0f1115; color: #e2e8f0; }
+    
+    /* ================= Page Banner ================= */
+    .page-header {
+        background-color: #16181f;
+        border: 1px solid #222631;
+        border-radius: 16px;
+        padding: 40px 50px;
+        margin-bottom: 40px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        text-align: center;
+    }
+    .page-title { font-size: 2.5rem; font-weight: 800; color: #ffffff; margin: 0; letter-spacing: 1px; }
+    .page-subtitle { font-size: 1rem; color: #94a3b8; margin-top: 10px; }
+
+    /* ================= Sidebar Filters (แผงค้นหาด้านซ้าย) ================= */
+    .filter-card { 
+        background: #16181f; 
+        border: 1px solid #222631; 
+        border-radius: 16px; 
+        padding: 30px; 
+        position: sticky; 
+        top: 20px; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .filter-heading { 
+        color: #ffffff; 
+        font-size: 1rem; 
+        font-weight: 700; 
+        margin-bottom: 15px; 
+        display: flex; 
+        align-items: center; 
+        gap: 10px; 
+    }
+    .filter-heading i { color: #6366f1; } 
+    
+    .form-control-custom, .form-select-custom { 
+        background-color: #222631; 
+        border: 1px solid transparent; 
+        color: #ffffff !important; 
+        padding: 12px 15px; 
+        border-radius: 10px; 
+        font-size: 0.95rem; 
+        width: 100%; 
+        transition: 0.2s; 
+        outline: none; 
+    }
+    .form-control-custom:focus, .form-select-custom:focus { 
+        border-color: #6366f1; 
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25); 
+        background-color: #1a1d24;
+    }
+    .form-control-custom::placeholder { color: #64748b !important; }
+    
+    /* แต่งลูกศร Dropdown ให้กลืนกับธีมมืด */
+    .form-select-custom { 
+        appearance: none; 
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E"); 
+        background-repeat: no-repeat; 
+        background-position: right 15px center; 
+        background-size: 12px 12px; 
+    }
+    .form-select-custom option { background-color: #16181f; color: white; }
+
+    /* ปุ่มค้นหาและปุ่มล้าง */
+    .btn-search { 
+        background-color: #6366f1;
+        color: #ffffff; 
+        border: none; 
+        border-radius: 10px; 
+        padding: 14px; 
+        font-weight: 700; 
+        font-size: 1rem; 
+        transition: 0.2s; 
+        box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);
+    }
+    .btn-search:hover { background-color: #4f46e5; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(99, 102, 241, 0.3); color: white; }
+    
+    .btn-clear { 
+        background: transparent; 
+        color: #94a3b8; 
+        border: 1px solid #334155; 
+        border-radius: 10px; 
+        padding: 12px; 
+        font-weight: 600; 
+        font-size: 0.95rem; 
+        transition: 0.2s; 
+        text-align: center; 
+        display: block; 
+        text-decoration: none; 
+    }
+    .btn-clear:hover { background: #334155; color: white; border-color: #4b5563; }
+
+    /* ================= Product Cards ================= */
+    .product-card { 
+        background-color: #16181f; 
+        border-radius: 16px; 
+        border: 1px solid #222631; 
+        overflow: hidden; 
+        position: relative; 
+        transition: all 0.3s ease; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .product-card:hover { 
+        transform: translateY(-8px); 
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3); 
+        border-color: #6366f1; 
+    }
+    .product-img { height: 260px; width: 100%; object-fit: cover; border-radius: 16px 16px 0 0; transition: 0.5s ease; }
+    .product-card:hover .product-img { transform: scale(1.05); }
+
+    .badge-status { position: absolute; top: 15px; left: 15px; border-radius: 20px; padding: 6px 14px; font-size: 0.75rem; font-weight: 800; color: white; z-index: 2; box-shadow: 0 4px 10px rgba(0,0,0,0.3); letter-spacing: 0.5px; }
+    .bg-bestseller { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); } 
+    .bg-hot { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); } 
+    .bg-new { background: linear-gradient(135deg, #10b981 0%, #059669 100%); } 
+
+    .badge-discount { position: absolute; top: 15px; right: 15px; background-color: rgba(34, 38, 49, 0.95); border-radius: 20px; padding: 6px 12px; font-size: 0.75rem; font-weight: 800; color: #fbbf24; z-index: 2; box-shadow: 0 4px 10px rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+    
+    .btn-heart { position: absolute; bottom: 15px; right: 15px; background-color: rgba(34, 38, 49, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 50%; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; color: white; z-index: 2; backdrop-filter: blur(5px); transition: 0.3s; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-size: 1.1rem; }
+    .btn-heart:hover { background-color: #ef4444; border-color: #ef4444; transform: scale(1.1); }
+    
+    .btn-cart { background-color: #6366f1; color: white; border-radius: 10px; font-size: 0.95rem; font-weight: 700; transition: 0.3s; border: none; padding: 12px; display: flex; justify-content: center; align-items: center; gap: 8px; width: 100%; margin-top: 10px; }
+    .btn-cart:hover { background-color: #4f46e5; color: white; }
+    
+    .product-title { font-size: 1.1rem; font-weight: 700; color: #ffffff; margin-bottom: 8px; transition: 0.2s; }
+    .product-title:hover { color: #818cf8; }
+    
+    .product-category { color: #64748b; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+</style>
+
+<div class="container mt-4 mb-5">
+    
+    <!-- 1. แบนเนอร์หัวข้อ -->
+    <div class="page-header">
+        <h1 class="page-title">สินค้าทั้งหมด</h1>
+        <p class="page-subtitle">ค้นพบไอเทมเกมและของสะสมที่คุณตามหาได้ที่นี่</p>
+    </div>
+
+    <div class="row g-5">
+        
+        <!-- 2. แผงเมนูค้นหาและตัวกรอง (Sidebar) -->
+        <div class="col-lg-3">
+            <div class="filter-card">
+                <form action="/Product" method="get">
+                    
+                    <!-- เก็บค่า Search เดิมไว้แบบซ่อน (เพื่อให้ค้นหาจาก Navbar แล้วมากรองหมวดหมู่ต่อได้โดยคำค้นหาไม่หาย) -->
+                    @if (!string.IsNullOrEmpty(currentSearch))
+                    {
+                        <input type="hidden" name="search" value="@currentSearch" />
+                    }
+
+                    <!-- Category (ดึงอัตโนมัติจากฐานข้อมูล) -->
+                    <div class="mb-4">
+                        <div class="filter-heading"><i class="fa-solid fa-layer-group"></i> หมวดหมู่</div>
+                        <select name="category" class="form-select-custom">
+                            <option value="" selected="@(string.IsNullOrEmpty(currentCategory))">ทั้งหมด</option>
+                            
+                            @if (ViewBag.Categories != null)
+                            {
+                                foreach (var cat in ViewBag.Categories)
+                                {
+                                    <option value="@cat" selected="@(currentCategory == cat)">@cat</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Sort -->
+                    <div class="mb-5">
+                        <div class="filter-heading"><i class="fa-solid fa-arrow-down-a-z"></i> เรียงลำดับ</div>
+                        <select name="sort" class="form-select-custom">
+                            <option value="newest" selected="@(currentSort == "newest" || string.IsNullOrEmpty(currentSort))"> มาใหม่ล่าสุด</option>
+                            <option value="price_asc" selected="@(currentSort == "price_asc")"> ราคา: ต่ำไปสูง</option>
+                            <option value="price_desc" selected="@(currentSort == "price_desc")"> ราคา: สูงไปต่ำ</option>
+                        </select>
+                    </div>
+
+                    <!-- ปุ่มกด -->
+                    <button type="submit" class="btn-search w-100 mb-3">
+                        กรองผลลัพธ์
+                    </button>
+                    
+                    <!-- ปุ่มล้างการค้นหา (ลบ query string ทั้งหมด) -->
+                    <a href="/Product" class="btn-clear w-100">
+                        ล้างการค้นหา
+                    </a>
+                    
+                </form>
+            </div>
+        </div>
+
+        <!-- 3. ส่วนแสดงรายการสินค้า (Grid) -->
+        <div class="col-lg-9">
+            
+            <!-- ข้อความบอกจำนวนสินค้าและคำที่ค้นหา -->
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom" style="border-color: #222631 !important;">
+                <div style="color: #94a3b8; font-size: 1rem; font-weight: 500;">
+                    พบสินค้าทั้งหมด <span style="color: #ffffff; font-weight: 800; font-size: 1.1rem;">@(Model?.Count() ?? 0)</span> รายการ
+                    
+                    @if (!string.IsNullOrEmpty(currentSearch))
+                    {
+                        <span>(ผลการค้นหาสำหรับ: <span class="text-white fw-bold">"@currentSearch"</span>)</span>
+                    }
+                </div>
+            </div>
+
+            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var item in Model)
+                    {
+                        string badgeText = "";
+                        string badgeClass = "";
+                        
+                        // เงื่อนไขติดป้าย
+                        if (item.ReviewCount > 150) {
+                            badgeText = "ขายดี";
+                            badgeClass = "bg-bestseller";
+                        } else if (item.ReviewCount > 50) {
+                            badgeText = "ฮิต";
+                            badgeClass = "bg-hot";
+                        } else if (item.ReviewCount < 10) { 
+                            badgeText = "ใหม่";
+                            badgeClass = "bg-new";
+                        }
+
+                        <div class="col product-item">
+                            <div class="card h-100 product-card border-0">
+                                
+                                <a href="/Product/Details/@item.ProductId" class="position-relative d-block overflow-hidden">
+                                    
+                                    @if (!string.IsNullOrEmpty(badgeText))
+                                    {
+                                        <span class="badge-status @badgeClass">@badgeText</span>
+                                    }
+
+                                    @if (item.OriginalPrice.HasValue && item.OriginalPrice > item.Price)
+                                    {
+                                        var discount = Math.Round((1 - (item.Price / item.OriginalPrice.Value)) * 100);
+                                        <span class="badge-discount">-@discount%</span>
+                                    }
+                                    
+                                    <div class="btn-heart"><i class="fa-solid fa-heart"></i></div>
+                                    
+                                    <img src="@(string.IsNullOrEmpty(item.ImageUrl) ? "https://via.placeholder.com/400x400?text=No+Image" : item.ImageUrl)" class="card-img-top product-img" alt="@item.Name">
+                                </a>
+                                
+                                <div class="card-body d-flex flex-column p-4 bg-transparent">
+                                    <span class="product-category mb-2">@item.Category</span>
+                                    
+                                    <a href="/Product/Details/@item.ProductId" class="text-decoration-none">
+                                        <h6 class="product-title text-truncate" title="@item.Name">@item.Name</h6>
+                                    </a>
+                                    
+                                    <div class="rating mb-3" style="color: #fbbf24; font-size: 0.9rem;">
+                                        ★★★★★ <span style="color: #64748b; font-size: 0.8rem; margin-left: 6px;">(@item.ReviewCount)</span>
+                                    </div>
+
+                                    <div class="mt-auto d-flex align-items-baseline mb-2">
+                                        <h4 class="fw-bold mb-0 me-2" style="color: #ffffff;">฿@item.Price.ToString("N0")</h4>
+                                        
+                                        @if (item.OriginalPrice.HasValue && item.OriginalPrice > item.Price)
+                                        {
+                                            <small class="text-decoration-line-through" style="color: #64748b; font-size: 0.9rem;">฿@item.OriginalPrice.Value.ToString("N0")</small>
+                                        }
+                                    </div>
+                                    
+                                    <form action="/Cart/Add" method="post" class="w-100 mb-0">
+                                        <input type="hidden" name="productId" value="@item.ProductId" />
+                                        <button type="submit" class="btn btn-cart">
+                                            <i class="fa-solid fa-cart-plus me-1"></i> หยิบใส่ตะกร้า
+                                        </button>
+                                    </form>
+                                </div>
+                                
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="col-12 w-100 text-center py-5">
+                        <div style="font-size: 4rem; color: #334155; margin-bottom: 20px;"><i class="fa-solid fa-box-open"></i></div>
+                        <h4 style="color: #cbd5e1; font-weight: 700;">ไม่พบสินค้าที่คุณค้นหา</h4>
+                        <p style="color: #64748b; font-size: 1.1rem;">ลองเปลี่ยนคำค้นหาหรือเลือกหมวดหมู่ใหม่อีกครั้ง</p>
+                        <a href="/Product" class="btn btn-search mt-3 px-4" style="display: inline-block;">ดูสินค้าทั้งหมด</a>
+                    </div>
+                }
+            </div>
+            
+        </div>
+    </div>
+</div>

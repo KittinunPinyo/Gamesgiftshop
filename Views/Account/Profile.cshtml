@@ -1,0 +1,366 @@
+@model IEnumerable<Gamesgiftshop.Models.Order>
+
+@{
+    ViewData["Title"] = "โปรไฟล์ของฉัน - Games Gift Shop";
+    
+    var displayName = User.Identity?.Name ?? "Member";
+    var initial = string.IsNullOrEmpty(displayName) ? "U" : displayName.Substring(0, 1).ToUpper();
+    var emailClaim = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email);
+    var userEmail = emailClaim != null && !string.IsNullOrEmpty(emailClaim.Value) ? emailClaim.Value : "ยังไม่ได้ระบุอีเมล";
+
+    // รับค่าเบอร์โทรและที่อยู่มาจาก Controller
+    var phone = ViewBag.Phone as string;
+    var displayPhone = string.IsNullOrEmpty(phone) ? "ยังไม่ได้ระบุเบอร์โทรศัพท์" : phone;
+    var addresses = ViewBag.Addresses as List<Gamesgiftshop.Models.Useraddress>;
+}
+
+<style>
+    /* ================= ธีม Modern Minimalist ================= */
+    body { background-color: #0f1115; color: #e2e8f0; }
+    .profile-container { max-width: 1200px; margin: 40px auto; padding: 0 15px; }
+    .profile-card { background: #16181f; border: 1px solid #222631; border-radius: 16px; padding: 35px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); }
+    .profile-header { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; padding-bottom: 25px; border-bottom: 1px solid #222631; }
+    
+    .profile-avatar { width: 90px; height: 90px; border-radius: 50%; background-color: #6366f1; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; color: white; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); }
+    .loyalty-box { background: #222631; border: 1px solid transparent; border-radius: 12px; padding: 15px 25px; text-align: center; min-width: 150px; }
+    .loyalty-points { font-size: 1.8rem; font-weight: 800; color: #6366f1; }
+    
+    .section-title { font-size: 1.1rem; font-weight: 700; color: #ffffff; margin-bottom: 20px; }
+    .text-label { color: #64748b; font-size: 0.9rem; font-weight: 500; }
+    .text-value { color: #f1f5f9; font-size: 0.95rem; font-weight: 500; }
+    .action-link { color: #6366f1; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: 0.2s; }
+    .action-link:hover { color: #818cf8; text-decoration: underline; }
+    
+    .info-box { background: #222631; border: 1px solid transparent; border-radius: 12px; padding: 20px 25px; margin-bottom: 30px; }
+    .info-row { display: flex; margin-bottom: 12px; }
+    .info-row:last-child { margin-bottom: 0; }
+    .info-row .text-label { width: 130px; flex-shrink: 0; }
+    
+    /* กล่องที่อยู่ */
+    .address-card-shopee { background: #1a1d24; border: 1px solid #222631; border-radius: 12px; padding: 20px; margin-bottom: 15px; transition: 0.2s; }
+    .address-card-shopee:hover { border-color: #6366f1; background: #222631; }
+    .addr-name { font-size: 1rem; font-weight: 700; color: #ffffff; }
+    .addr-phone { font-size: 0.9rem; color: #94a3b8; border-left: 1px solid #4b5563; margin-left: 12px; padding-left: 12px; }
+    .addr-detail { color: #cbd5e1; font-size: 0.95rem; margin-top: 10px; line-height: 1.6; }
+    .badge-default { background: #6366f1; color: white; border: none; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; }
+    
+    /* ปุ่ม Radio ติ๊กเลือกที่อยู่ */
+    .form-check-input { background-color: #222631; border-color: #4b5563; cursor: pointer; }
+    .form-check-input:checked { background-color: #6366f1; border-color: #6366f1; }
+
+    .btn-add-address { background: transparent; border: 1px dashed #6366f1; color: #818cf8; border-radius: 12px; padding: 15px; width: 100%; font-weight: bold; transition: 0.2s; cursor: pointer; text-align: center; margin-bottom: 20px; }
+    .btn-add-address:hover { background: rgba(99, 102, 241, 0.1); color: #ffffff; }
+    .form-control-custom { background-color: #222631; border: 1px solid transparent; color: #ffffff !important; padding: 12px 15px; border-radius: 8px; transition: 0.2s; }
+    .form-control-custom::placeholder { color: #94a3b8 !important; }
+    .form-control-custom:focus { border-color: #6366f1; box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25); background-color: #1a1d24; outline: none; }
+    
+    .btn-save { background-color: #6366f1; color: white; border: none; border-radius: 8px; padding: 12px; font-weight: 600; transition: 0.2s; }
+    .btn-save:hover { background-color: #4f46e5; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); color: white; }
+    .btn-cancel { background: transparent; color: #94a3b8; border: 1px solid #334155; border-radius: 8px; padding: 12px; font-weight: 600; transition: 0.2s; }
+    .btn-cancel:hover { background: #334155; color: white; }
+    
+    /* ประวัติคำสั่งซื้อ */
+    .history-card { background: #1a1d24; border: 1px solid #222631; border-radius: 12px; padding: 20px; margin-bottom: 15px; transition: 0.2s; }
+    .history-card:hover { border-color: #6366f1; background: #222631; }
+    .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; display: inline-block; }
+    .status-pending { background: rgba(251, 191, 36, 0.1); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.2); }
+    .status-completed { background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
+    
+    /* ================= ปุ่มออกจากระบบ (หน้า Profile) ================= */
+    .btn-profile-logout {
+        background: rgba(239, 68, 68, 0.05);
+        color: #ef4444;
+        border: 1px dashed rgba(239, 68, 68, 0.4);
+        border-radius: 12px;
+        padding: 12px;
+        width: 100%;
+        font-weight: bold;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        margin-top: 25px;
+    }
+    .btn-profile-logout:hover {
+        background: #ef4444;
+        border: 1px solid #ef4444;
+        color: white;
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        transform: translateY(-2px);
+    }
+</style>
+
+<div class="container profile-container mb-5">
+    <div class="row g-4">
+        
+        <!-- ================== ฝั่งซ้าย: ข้อมูลส่วนตัว & ที่อยู่ ================== -->
+        <div class="col-lg-6">
+            <div class="profile-card h-100">
+                
+                <div class="profile-header d-flex flex-column flex-sm-row justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3 mb-3 mb-sm-0">
+                        <div class="profile-avatar">@initial</div>
+                        <div>
+                            <h3 class="fw-bold text-white mb-1" style="font-size: 1.4rem;">@displayName</h3>
+                            <span class="badge" style="background-color: #334155; font-size: 0.75rem; font-weight: 500;">สมาชิกระดับทั่วไป</span>
+                        </div>
+                    </div>
+                    <div class="loyalty-box shadow-sm">
+                        <div class="text-label mb-1" style="font-size: 0.75rem;">Loyalty Points</div>
+                        <div class="loyalty-points">1,250</div>
+                    </div>
+                </div>
+
+                <!-- 🟢 โหมดแสดงข้อมูล -->
+                <div id="view-mode">
+                    <div class="d-flex justify-content-between align-items-end mb-3">
+                        <div class="section-title mb-0">ข้อมูลส่วนตัว</div>
+                        <a href="javascript:void(0)" onclick="toggleEditMode(true)" class="action-link">แก้ไขข้อมูล</a>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-row">
+                            <div class="text-label">ชื่อผู้ใช้งาน</div>
+                            <div class="text-value">@displayName</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="text-label">อีเมล</div>
+                            <div class="text-value">@userEmail</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="text-label">เบอร์โทรศัพท์</div>
+                            <div class="text-value">@displayPhone</div>
+                        </div>
+                    </div>
+
+                    <div class="section-title mt-4">ที่อยู่ </div>
+                    
+                    @if (addresses != null && addresses.Count > 0)
+                    {
+                        // เรียงเอาที่อยู่หลัก (IsDefault == true) ดันขึ้นมาแสดงบนสุดเสมอ
+                        var sortedAddresses = addresses.OrderByDescending(a => a.IsDefault).ToList();
+                        
+                        int count = 1;
+                        foreach (var addr in sortedAddresses)
+                        {
+                            <div class="address-card-shopee">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <span class="addr-name">@displayName</span> <!-- เอา (ที่อยู่ที่ X) ออกแล้ว -->
+                                        <span class="addr-phone">@displayPhone</span>
+                                    </div>
+                                    <div class="addr-actions">
+                                        <a href="javascript:void(0)" onclick="toggleEditMode(true)" class="action-link">แก้ไข</a>
+                                    </div>
+                                </div>
+                                <div class="addr-detail">
+                                    @addr.AddressDetail
+                                </div>
+                                <!-- แปะป้ายค่าเริ่มต้นให้อันแรก -->
+                                @if (addr.IsDefault == true || (count == 1 && sortedAddresses.All(a => a.IsDefault != true)))
+                                {
+                                    <div class="mt-3">
+                                        <span class="badge-default">ค่าเริ่มต้น</span>
+                                    </div>
+                                }
+                            </div>
+                            count++;
+                        }
+                    }
+                    else
+                    {
+                        <div class="info-box text-muted text-center" style="font-size: 0.9rem;">
+                            ยังไม่มีข้อมูลที่อยู่จัดส่ง กรุณากด "แก้ไขข้อมูล" เพื่อเพิ่มที่อยู่
+                        </div>
+                    }
+
+                    <a href="/Account/Logout" class="btn-profile-logout">
+                        <i class="fa-solid fa-power-off"></i> ออกจากระบบ
+                    </a>
+                </div>
+
+                <!-- 🟠 โหมดแก้ไขข้อมูล -->
+                <div id="edit-mode" style="display: none;">
+                    <div class="section-title" style="color: #ffffff; font-size: 1.3rem;">แก้ไขโปรไฟล์และที่อยู่</div>
+                    
+                    <form method="post" action="/Account/EditProfile">
+                        <div class="mb-3">
+                            <label class="text-label mb-2">ชื่อผู้ใช้งาน (Username)</label>
+                            <input type="text" name="username" class="form-control form-control-custom" value="@displayName" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="text-label mb-2">เบอร์โทรศัพท์</label>
+                            <input type="tel" name="phone" class="form-control form-control-custom" placeholder="เช่น 0987654321" value="@phone">
+                        </div>
+
+                        <hr style="border-color: #334155; margin: 35px 0;">
+                        <div class="section-title">จัดการที่อยู่จัดส่ง</div>
+
+                        <div id="address-fields-container">
+                            @if (addresses != null && addresses.Count > 0)
+                            {
+                                int editCount = 0;
+                                foreach (var addr in addresses) // แสดงตามลำดับเดิมใน Database เพื่อไม่ให้งงตอนแก้ไข
+                                {
+                                    // เช็คว่าต้องติ๊กปุ่มวิทยุอันไหน (อันที่เป็นค่าเริ่มต้น หรือถ้าไม่มีเลยก็ติ๊กอันแรก)
+                                    bool isDef = addr.IsDefault == true || (editCount == 0 && !addresses.Any(a => a.IsDefault == true));
+                                    
+                                    <div class="address-card-shopee address-item mt-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <div class="form-check m-0">
+                                                <input class="form-check-input default-addr-radio" type="radio" name="DefaultAddressIndex" value="@editCount" id="defAddr_@editCount" @(isDef ? "checked" : "")>
+                                                <label class="form-check-label text-label" for="defAddr_@editCount" style="cursor: pointer; color: #818cf8;">
+                                                    ตั้งเป็นที่อยู่หลัก
+                                                </label>
+                                            </div>
+                                            @if (editCount > 0)
+                                            {
+                                                <a href="javascript:void(0)" class="text-danger" style="text-decoration: none; font-size: 0.85rem;" onclick="removeAddressItem(this)">ลบที่อยู่นี้</a>
+                                            }
+                                        </div>
+                                        <textarea name="Addresses" class="form-control form-control-custom border-0" rows="3" required>@addr.AddressDetail</textarea>
+                                    </div>
+                                    editCount++;
+                                }
+                            }
+                            else
+                            {
+                                <div class="address-card-shopee address-item mt-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div class="form-check m-0">
+                                            <input class="form-check-input default-addr-radio" type="radio" name="DefaultAddressIndex" value="0" id="defAddr_0" checked>
+                                            <label class="form-check-label text-label" for="defAddr_0" style="cursor: pointer; color: #818cf8;">
+                                                ตั้งเป็นที่อยู่หลัก
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <textarea name="Addresses" class="form-control form-control-custom border-0" rows="3" placeholder="กรอกที่อยู่จัดส่งที่นี่..." required></textarea>
+                                </div>
+                            }
+                        </div>
+
+                        <button type="button" class="btn-add-address mt-2" onclick="addAddressField()">
+                            + เพิ่มที่อยู่ใหม่
+                        </button>
+
+                        <div class="d-flex gap-3 mt-4">
+                            <button type="button" class="btn btn-cancel w-50" onclick="toggleEditMode(false)">ยกเลิก</button>
+                            <button type="submit" class="btn btn-save w-50">บันทึกข้อมูล</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!--ฝั่งขวา: ประวัติคำสั่งซื้อจริงจาก-->
+        <div class="col-lg-6">
+            <div class="profile-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="section-title mb-0">ประวัติคำสั่งซื้อ</div>
+                </div>
+                
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var order in Model)
+                    {
+                        <div class="history-card">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <div class="fw-bold mb-1" style="font-size: 1.05rem; color: #ffffff;">คำสั่งซื้อ #@(order.OrderId.ToString("D4"))</div>
+                                    <div class="text-label mt-1" style="font-size: 0.85rem;">
+                                        ที่อยู่จัดส่ง: @order.ShippingAddress
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <span class="status-badge @(order.Status == "สำเร็จ" ? "status-completed" : "status-pending")">
+                                        @order.Status
+                                    </span>
+                                    <div class="fw-bold mt-2" style="color: #6366f1; font-size: 1.1rem;">
+                                        ฿@order.TotalAmount.ToString("N0")
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-5" style="background: #222631; border-radius: 12px;">
+                        <span style="color: #64748b;">คุณยังไม่มีประวัติการสั่งซื้อ</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // สลับโหมด View กับ Edit
+    function toggleEditMode(isEditing) {
+        const viewMode = document.getElementById('view-mode');
+        const editMode = document.getElementById('edit-mode');
+        if (isEditing) {
+            viewMode.style.display = 'none';
+            editMode.style.display = 'block';
+        } else {
+            viewMode.style.display = 'block';
+            editMode.style.display = 'none';
+        }
+    }
+
+    // จัดเรียงลำดับ Value ของ Radio Button ใหม่เวลามีการเพิ่ม/ลบ
+    function updateAddressIndices() {
+        const items = document.querySelectorAll('.address-item');
+        items.forEach((item, index) => {
+            const radio = item.querySelector('.default-addr-radio');
+            if (radio) {
+                radio.value = index;
+                radio.id = 'defAddr_' + index;
+                const label = item.querySelector('.form-check-label');
+                if (label) label.setAttribute('for', 'defAddr_' + index);
+            }
+        });
+    }
+
+    // กดเพิ่มช่องที่อยู่ใหม่
+    function addAddressField() {
+        const container = document.getElementById('address-fields-container');
+        const index = container.querySelectorAll('.address-item').length;
+        const div = document.createElement('div');
+        div.className = 'address-card-shopee address-item mt-3';
+        div.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="form-check m-0">
+                    <input class="form-check-input default-addr-radio" type="radio" name="DefaultAddressIndex" value="${index}" id="defAddr_${index}">
+                    <label class="form-check-label text-label" for="defAddr_${index}" style="cursor: pointer; color: #818cf8;">
+                        ตั้งเป็นที่อยู่หลัก
+                    </label>
+                </div>
+                <a href="javascript:void(0)" class="text-danger" style="text-decoration: none; font-size: 0.85rem;" onclick="removeAddressItem(this)">ลบที่อยู่นี้</a>
+            </div>
+            <textarea name="Addresses" class="form-control form-control-custom border-0" rows="3" placeholder="รายละเอียดที่อยู่..." required></textarea>
+        `;
+        container.appendChild(div);
+        updateAddressIndices();
+    }
+
+    // กดลบช่องที่อยู่
+    function removeAddressItem(btn) {
+        const item = btn.closest('.address-item');
+        const radio = item.querySelector('.default-addr-radio');
+        const wasChecked = radio && radio.checked; // เช็คว่าช่องที่กำลังลบ ถูกติ๊กเป็นที่อยู่หลักอยู่หรือเปล่า
+        
+        item.remove();
+        updateAddressIndices();
+        
+        // ถ้าเผลอลบอันที่เป็นที่อยู่หลักไป ให้ระบบออโต้ไปติ๊กอันแรกสุดแทน
+        if (wasChecked) {
+            const firstRadio = document.querySelector('.default-addr-radio');
+            if (firstRadio) firstRadio.checked = true;
+        }
+    }
+</script>
