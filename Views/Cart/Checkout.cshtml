@@ -161,15 +161,22 @@
 
                 <!-- ฟอร์มยืนยันคำสั่งซื้อและแนบสลิป (เพิ่ม enctype) -->
                 <form action="/Cart/ConfirmOrder" method="post" enctype="multipart/form-data">
-                    
                     <input type="hidden" id="finalAddressInput" name="address" value="@defaultAddressVal" />
-
-                    <!-- กล่องอัปโหลดที่ผูก Event การเปลี่ยนแปลงไฟล์ -->
-                    <label class="upload-box w-100" for="paymentSlip" id="uploadArea">
-                        <div class="upload-icon"><i class="fa-solid fa-camera"></i></div>
-                        <div class="upload-text" id="fileNameDisplay"><span>คลิกเพื่ออัปโหลด</span> หรือลากไฟล์มาวางที่นี่</div>
-                    </label>
-                    <input type="file" id="paymentSlip" name="paymentSlip" accept="image/jpeg, image/png" class="d-none" required onchange="showFileName(this)">
+                    <div style="position: relative; margin-bottom: 20px;">
+                        <label class="upload-box w-100 mb-0" for="paymentSlip" id="uploadArea">
+                            <div class="upload-icon"><i class="fa-solid fa-camera"></i></div>
+                            <div class="upload-text" id="fileNameDisplay"><span>คลิกเพื่ออัปโหลด</span> หรือลากไฟล์มาวางที่นี่</div>
+                        </label>
+                        
+                        <!-- ปุ่มกากบาทสำหรับลบรูป (ซ่อนไว้ตอนแรก) -->
+                        <button type="button" id="removeFileBtn" class="btn btn-sm btn-danger d-none" 
+                                style="position: absolute; top: 15px; right: 15px; border-radius: 50%; width: 32px; height: 32px; padding: 0; display: flex; justify-content: center; align-items: center; z-index: 10;" 
+                                onclick="clearFileSelection()" title="ลบไฟล์ที่เลือก">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    
+                    <input type="file" id="paymentSlip" name="paymentSlip" accept="image/jpeg, image/png, image/jpg" class="d-none" required onchange="showFileName(this)">
                     
                     <button type="submit" class="btn-confirm">
                         <i class="fa-solid fa-check-circle"></i> ยืนยันคำสั่งซื้อและส่งสลิป
@@ -193,6 +200,7 @@
         const display = document.getElementById('fileNameDisplay');
         const uploadArea = document.getElementById('uploadArea');
         const icon = uploadArea.querySelector('.upload-icon i');
+        const removeBtn = document.getElementById('removeFileBtn');
         
         if (input.files && input.files[0]) {
             // แสดงชื่อไฟล์ และเปลี่ยนสีกรอบ/ไอคอนให้เป็นสีเขียว
@@ -201,13 +209,33 @@
             uploadArea.style.backgroundColor = 'rgba(16, 185, 129, 0.05)';
             icon.className = 'fa-solid fa-image';
             icon.style.color = '#10b981';
+            // แสดงปุ่มลบ 
+            removeBtn.classList.remove('d-none');
         } else {
-            // คืนค่ากลับไปเป็นแบบเริ่มต้นถ้ากดยกเลิก
-            display.innerHTML = '<span>คลิกเพื่ออัปโหลด</span> หรือลากไฟล์มาวางที่นี่';
-            uploadArea.style.borderColor = '#334155';
-            uploadArea.style.backgroundColor = '#0f1115';
-            icon.className = 'fa-solid fa-camera';
-            icon.style.color = '#64748b';
+            resetUploadBox();
         }
+    }
+
+    // ฟังก์ชันเคลียร์ไฟล์ที่เลือก
+    function clearFileSelection() {
+        const input = document.getElementById('paymentSlip');
+        input.value = ''; // เคลียร์ค่าไฟล์ที่ถูกเลือกไว้
+        resetUploadBox(); // รีเซ็ตหน้าตา UI กลับเป็นเหมือนเดิม
+    }
+
+    // ฟังก์ชันรีเซ็ต UI กล่องอัปโหลด
+    function resetUploadBox() {
+        const display = document.getElementById('fileNameDisplay');
+        const uploadArea = document.getElementById('uploadArea');
+        const icon = uploadArea.querySelector('.upload-icon i');
+        const removeBtn = document.getElementById('removeFileBtn');
+        
+        display.innerHTML = '<span>คลิกเพื่ออัปโหลด</span> หรือลากไฟล์มาวางที่นี่';
+        uploadArea.style.borderColor = '#334155';
+        uploadArea.style.backgroundColor = '#0f1115';
+        icon.className = 'fa-solid fa-camera';
+        icon.style.color = '#64748b';
+        // ซ่อนปุ่มลบ
+        removeBtn.classList.add('d-none');
     }
 </script>
