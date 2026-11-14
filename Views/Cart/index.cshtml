@@ -103,8 +103,16 @@
                         var dbProduct = _db.Products.FirstOrDefault(p => p.ProductId == item.ProductId);
                         int currentStock = dbProduct != null ? (dbProduct.StockQuantity ?? 0) : 0;
 
+                        // ⭐️ จัดการดึงรููปภาพแรกสุดของสินค้า ⭐️
+                        string cartImg = "https://via.placeholder.com/150?text=No+Image";
+                        if (dbProduct != null && !string.IsNullOrEmpty(dbProduct.ImageUrl))
+                        {
+                            cartImg = dbProduct.ImageUrl.Split(',').FirstOrDefault(u => !string.IsNullOrWhiteSpace(u)) ?? cartImg;
+                        }
+
                         <div class="cart-item-row">
-                            <img src="@item.ImageUrl" alt="@item.Name" class="item-img">
+                            <!-- แสดงรูปที่แยกมาแล้ว -->
+                            <img src="@cartImg" alt="@item.Name" class="item-img" onerror="this.src='https://via.placeholder.com/150?text=Error'">
                             
                             <div class="item-details">
                                 <a href="/Product/Details/@item.ProductId" class="item-name">@item.Name</a>

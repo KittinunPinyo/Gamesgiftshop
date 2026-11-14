@@ -185,3 +185,4 @@ D:\CSI 402\Gamesgiftshop\obj\Debug\net10.0\Gamesgiftshop.pdb
 D:\CSI 402\Gamesgiftshop\obj\Debug\net10.0\Gamesgiftshop.genruntimeconfig.cache
 D:\CSI 402\Gamesgiftshop\obj\Debug\net10.0\ref\Gamesgiftshop.dll
 D:\CSI 402\Gamesgiftshop\obj\Debug\net10.0\compressed\g1q9mcx8ra-{0}-b9sayid5wm-b9sayid5wm.gz
+D:\CSI 402\Gamesgiftshop\obj\Debug\net10.0\Gamesgiftshop.sourcelink.json

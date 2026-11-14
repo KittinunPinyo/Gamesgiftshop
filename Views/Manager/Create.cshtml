@@ -6,17 +6,14 @@
 }
 
 <style>
-    /* ปรับโทนสีฟอร์มให้เข้ากับหน้า Manager สว่างๆ */
-    .create-card { background: #ffffff; border-radius: 12px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    .create-card { background: #ffffff; border-radius: 12px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); max-width: 700px; margin: 30px auto; }
     .form-control, .form-select { border: 1px solid #cbd5e0; }
     .form-control:focus, .form-select:focus { border-color: #4a3b8c; box-shadow: 0 0 0 2px rgba(74,59,140,0.2); }
-    
-    /* สไตล์สำหรับปุ่มเพิ่มรูป */
     .btn-add-img { color: #4a3b8c; font-weight: 600; transition: 0.2s; text-decoration: none; font-size: 0.9rem; }
     .btn-add-img:hover { color: #322659; text-decoration: underline; }
 </style>
 
-<div class="container mt-4 mb-5" style="max-width: 600px;">
+<div class="container mt-4 mb-5">
     <div class="create-card">
         <h3 class="fw-bold mb-4 text-center" style="color: #4a3b8c;"><i class="fa-solid fa-plus-circle"></i> เพิ่มสินค้าใหม่</h3>
 
@@ -28,14 +25,10 @@
                 <input asp-for="Name" class="form-control" placeholder="เช่น ฟิกเกอร์ Mario..." required />
             </div>
 
-            <!-- ================= ส่วนเลือกหรือพิมพ์หมวดหมู่ใหม่ ================= -->
             <div class="mb-3">
                 <label class="form-label fw-bold">ประเภท / หมวดหมู่</label>
-                
                 <select id="categoryDropdown" class="form-select" onchange="checkCategory()">
                     <option value="">-- เลือกหมวดหมู่ที่มีอยู่ --</option>
-                    
-                    <!-- ใช้ C# วนลูปดึงหมวดหมู่จาก Database มาแสดง -->
                     @if (ViewBag.Categories != null)
                     {
                         foreach (var cat in ViewBag.Categories)
@@ -46,45 +39,46 @@
                             }
                         }
                     }
-                    
-                    <!-- ตัวเลือกพิเศษสำหรับเพิ่มเอง -->
                     <option value="NEW" style="color: #4a3b8c; font-weight: bold;">+ เพิ่มหมวดหมู่ใหม่เอง...</option>
                 </select>
-
-                <!-- ช่องรับค่าจริง (จะโชว์เมื่อเลือกเพิ่มใหม่เอง) -->
                 <input type="text" asp-for="Category" id="categoryInput" class="form-control mt-2" placeholder="ระบุชื่อหมวดหมู่ที่ต้องการ..." style="display: none;" required>
             </div>
-            <!-- ============================================================= -->
 
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label asp-for="Price" class="form-label fw-bold">ราคาขาย (บาท)</label>
-                    <input asp-for="Price" type="number" step="0.01" class="form-control" placeholder="1200" required />
+                    <input asp-for="Price" type="number" step="0.01" class="form-control" required />
                 </div>
                 <div class="col-md-6 mb-3">
                     <label asp-for="OriginalPrice" class="form-label fw-bold">ราคาเต็ม (ถ้ามี)</label>
-                    <input asp-for="OriginalPrice" type="number" step="0.01" class="form-control" placeholder="1800" />
+                    <input asp-for="OriginalPrice" type="number" step="0.01" class="form-control" />
                 </div>
             </div>
 
-            <!-- ================= ส่วนรูปลิงก์หลายรูป ================= -->
+            <!-- ⭐️ เพิ่มช่องกรอก: รายละเอียดสินค้า ⭐️ -->
+            <div class="mb-3">
+                <label asp-for="Description" class="form-label fw-bold">รายละเอียดสินค้า</label>
+                <textarea asp-for="Description" class="form-control" rows="4" placeholder="ระบุรายละเอียดของสินค้า เช่น วัสดุ, คุณสมบัติพิเศษ..."></textarea>
+            </div>
+
+            <!-- ⭐️ เพิ่มช่องกรอก: ข้อมูลลิขสิทธิ์และการรับประกัน ⭐️ -->
+            <div class="mb-3">
+                <label asp-for="WarrantyInfo" class="form-label fw-bold">ข้อมูลลิขสิทธิ์และการรับประกัน</label>
+                <textarea asp-for="WarrantyInfo" class="form-control" rows="3" placeholder="ระบุเงื่อนไขการรับประกัน หรือข้อมูลลิขสิทธิ์..."></textarea>
+            </div>
+
             <div class="mb-3 p-3" style="background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px;">
                 <label class="form-label fw-bold">ลิงก์รูปภาพ (Image URLs)</label>
-                
-                <!-- กล่องเก็บช่องกรอก URL -->
                 <div id="image-inputs-wrapper">
                     <div class="input-group mb-2">
                         <span class="input-group-text bg-white" style="width: 85px; justify-content: center;">รูปหลัก</span>
-                        <!-- ตั้งชื่อ name="ImageUrls" ให้ Controller นำไปรวบเป็น List<string> -->
                         <input type="url" name="ImageUrls" class="form-control" placeholder="https://..." required>
                     </div>
                 </div>
-                
                 <button type="button" class="btn btn-link btn-add-img p-0 mt-1" onclick="addImageUrl()">
                     <i class="fa-solid fa-plus"></i> เพิ่มรูปภาพเพิ่มเติม
                 </button>
             </div>
-            <!-- ============================================================= -->
 
             <div class="row">
                 <div class="col-md-6 mb-3">
@@ -101,15 +95,10 @@
     </div>
 </div>
 
-<!-- Script สำหรับควบคุมช่องหมวดหมู่ และ ช่องเพิ่มรูปลิงก์ -->
 <script>
-    // ==========================================
-    // 1. ระบบควบคุมหมวดหมู่
-    // ==========================================
     function checkCategory() {
         var dropdown = document.getElementById("categoryDropdown");
         var input = document.getElementById("categoryInput");
-        
         if (dropdown.value === "NEW") {
             input.style.display = "block";
             input.value = ""; 
@@ -119,11 +108,10 @@
             input.value = dropdown.value; 
         }
     }
-
+    
     document.addEventListener("DOMContentLoaded", function() {
         var dropdown = document.getElementById("categoryDropdown");
         var input = document.getElementById("categoryInput");
-        
         if (dropdown.value === "NEW" || dropdown.value === "") {
             input.style.display = "block";
             input.value = "";
@@ -133,14 +121,10 @@
         }
     });
 
-    // ==========================================
-    // 2. ระบบเพิ่มช่องรูปลิงก์
-    // ==========================================
     let imageCount = 1;
     function addImageUrl() {
         imageCount++;
         const wrapper = document.getElementById('image-inputs-wrapper');
-        
         const newGroup = document.createElement('div');
         newGroup.className = 'input-group mb-2';
         newGroup.innerHTML = `
@@ -152,12 +136,12 @@
         `;
         wrapper.appendChild(newGroup);
     }
-
+    
     function updateImageLabels() {
         const groups = document.querySelectorAll('#image-inputs-wrapper .input-group');
         imageCount = groups.length;
         groups.forEach((group, index) => {
-            if (index > 0) { // ข้าม "รูปหลัก" (index 0)
+            if (index > 0) {
                 group.querySelector('.input-group-text').textContent = `รูปที่ ${index + 1}`;
             }
         });

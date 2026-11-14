@@ -27,5 +27,9 @@ public partial class Product
 
     public DateTime? CreatedAt { get; set; }
 
+    public string? Description { get; set; }
+    
+    public string? WarrantyInfo { get; set; }
+
     public virtual ICollection<Orderdetail> Orderdetails { get; set; } = new List<Orderdetail>();
 }

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
-using System.Collections.Generic; // 👈 เพิ่มบรรทัดนี้เพื่อใช้งาน List<>
+using System.Collections.Generic;
 using Gamesgiftshop.Models;
 
 namespace Gamesgiftshop.Controllers
@@ -125,25 +125,40 @@ namespace Gamesgiftshop.Controllers
 
             if (ModelState.IsValid)
             {
-                // จัดการรูปลิงก์หลายรูป (เชื่อมด้วยเครื่องหมาย ,)
+                // 1. ดึงข้อมูลสินค้าเดิมจากฐานข้อมูล
+                var existingProduct = _db.Products.FirstOrDefault(p => p.ProductId == id);
+                
+                if (existingProduct == null)
+                {
+                    return NotFound();
+                }
+
+                existingProduct.Name = data.Name;
+                existingProduct.Category = data.Category;
+                existingProduct.Price = data.Price;
+                existingProduct.OriginalPrice = data.OriginalPrice;
+                existingProduct.StockQuantity = data.StockQuantity;
+                existingProduct.Description = data.Description;
+                existingProduct.WarrantyInfo = data.WarrantyInfo;
+
+                // 3. จัดการรูปลิงก์หลายรูป
                 if (ImageUrls != null && ImageUrls.Any())
                 {
                     var validUrls = ImageUrls.Where(url => !string.IsNullOrWhiteSpace(url)).ToList();
                     if (validUrls.Any())
                     {
-                        data.ImageUrl = string.Join(",", validUrls);
+                        existingProduct.ImageUrl = string.Join(",", validUrls);
                     }
                     else
                     {
-                        data.ImageUrl = null;
+                        existingProduct.ImageUrl = null;
                     }
                 }
                 else 
                 {
-                    data.ImageUrl = null;
+                    existingProduct.ImageUrl = null;
                 }
 
-                _db.Products.Update(data);
                 _db.SaveChanges();
                 return RedirectToAction(nameof(Products));
             }
@@ -161,7 +176,7 @@ namespace Gamesgiftshop.Controllers
                 _db.Products.Remove(product);
                 _db.SaveChanges();
             }
-            return RedirectToAction("Products"); // ลบเสร็จกลับไปหน้า Products
+            return RedirectToAction("Products");
         }
     }
 }

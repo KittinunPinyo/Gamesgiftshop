@@ -159,16 +159,17 @@
                 <h3 class="section-header mt-4 pt-3 border-top" style="border-color: #222631 !important;">แนบหลักฐานการโอนเงิน</h3>
                 <p class="upload-instruction">กรุณาแนบรูปภาพสลิปโอนเงินเพื่อยืนยันคำสั่งซื้อ (รองรับไฟล์ JPG, PNG)</p>
 
-                <!-- ฟอร์มยืนยันคำสั่งซื้อและแนบสลิป -->
+                <!-- ฟอร์มยืนยันคำสั่งซื้อและแนบสลิป (เพิ่ม enctype) -->
                 <form action="/Cart/ConfirmOrder" method="post" enctype="multipart/form-data">
                     
                     <input type="hidden" id="finalAddressInput" name="address" value="@defaultAddressVal" />
 
-                    <label class="upload-box w-100" for="paymentSlip">
+                    <!-- กล่องอัปโหลดที่ผูก Event การเปลี่ยนแปลงไฟล์ -->
+                    <label class="upload-box w-100" for="paymentSlip" id="uploadArea">
                         <div class="upload-icon"><i class="fa-solid fa-camera"></i></div>
-                        <div class="upload-text"><span>คลิกเพื่ออัปโหลด</span> หรือลากไฟล์มาวางที่นี่</div>
+                        <div class="upload-text" id="fileNameDisplay"><span>คลิกเพื่ออัปโหลด</span> หรือลากไฟล์มาวางที่นี่</div>
                     </label>
-                    <input type="file" id="paymentSlip" name="paymentSlip" accept="image/*" class="d-none" required>
+                    <input type="file" id="paymentSlip" name="paymentSlip" accept="image/jpeg, image/png" class="d-none" required onchange="showFileName(this)">
                     
                     <button type="submit" class="btn-confirm">
                         <i class="fa-solid fa-check-circle"></i> ยืนยันคำสั่งซื้อและส่งสลิป
@@ -182,7 +183,31 @@
 </div>
 
 <script>
+    // อัปเดตที่อยู่
     function updateSelectedAddress(selectedValue) {
         document.getElementById('finalAddressInput').value = selectedValue;
+    }
+
+    // แสดงชื่อไฟล์เมื่ออัปโหลด
+    function showFileName(input) {
+        const display = document.getElementById('fileNameDisplay');
+        const uploadArea = document.getElementById('uploadArea');
+        const icon = uploadArea.querySelector('.upload-icon i');
+        
+        if (input.files && input.files[0]) {
+            // แสดงชื่อไฟล์ และเปลี่ยนสีกรอบ/ไอคอนให้เป็นสีเขียว
+            display.innerHTML = '<span style="color: #10b981;">' + input.files[0].name + '</span>';
+            uploadArea.style.borderColor = '#10b981';
+            uploadArea.style.backgroundColor = 'rgba(16, 185, 129, 0.05)';
+            icon.className = 'fa-solid fa-image';
+            icon.style.color = '#10b981';
+        } else {
+            // คืนค่ากลับไปเป็นแบบเริ่มต้นถ้ากดยกเลิก
+            display.innerHTML = '<span>คลิกเพื่ออัปโหลด</span> หรือลากไฟล์มาวางที่นี่';
+            uploadArea.style.borderColor = '#334155';
+            uploadArea.style.backgroundColor = '#0f1115';
+            icon.className = 'fa-solid fa-camera';
+            icon.style.color = '#64748b';
+        }
     }
 </script>
