@@ -23,11 +23,16 @@
             .staff-content { margin-left: 68px; padding: 18px 12px; }
         }
     </style>
+    <link rel="stylesheet" href="~/css/staff-theme.css" asp-append-version="true" />
 </head>
-<body>
+<body class="staff-theme">
     <nav class="staff-sidebar">
         <div class="staff-brand"><i class="fa-solid fa-boxes-stacked me-2"></i><span>Staff Panel</span></div>
         <ul class="staff-menu">
+            @if (User.IsInRole("Admin"))
+            {
+                <li><a asp-controller="Admin" asp-action="Dashboard"><i class="fa-solid fa-shield-halved"></i><span>Admin Console</span></a></li>
+            }
             <li><a asp-controller="Staff" asp-action="Dashboard" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Dashboard" ? "active" : "")"><i class="fa-solid fa-clipboard-list"></i><span>จัดเตรียมคำสั่งซื้อ</span></a></li>
             <li><a asp-controller="Staff" asp-action="Inventory" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Inventory" ? "active" : "")"><i class="fa-solid fa-boxes-stacked"></i><span>รับสินค้าเข้าคลัง</span></a></li>
         </ul>

@@ -32,6 +32,19 @@ namespace Gamesgiftshop.Controllers
         [HttpPost]
         public IActionResult Register(User data)
         {
+            if (string.IsNullOrWhiteSpace(data.Phone))
+            {
+                ViewBag.Error = "กรุณากรอกเบอร์โทรศัพท์";
+                return View(data);
+            }
+
+            data.Phone = data.Phone.Trim();
+            if (data.Phone.Length > 20)
+            {
+                ViewBag.Error = "เบอร์โทรศัพท์ต้องไม่เกิน 20 ตัวอักษร";
+                return View(data);
+            }
+
             // ⭐️ ดักจับตรวจสอบรหัสผ่าน ต้องมีอย่างน้อย 6 ตัวอักษร
             if (string.IsNullOrEmpty(data.Password) || data.Password.Length < 6)
             {
@@ -95,6 +108,11 @@ namespace Gamesgiftshop.Controllers
                 new ClaimsPrincipal(claimsIdentity), 
                 authProperties);
 
+            if (user.Role == "Admin")
+            {
+                return RedirectToAction("Dashboard", "Admin");
+            }
+
             if (user.Role == "Manager")
             {
                 return RedirectToAction("Dashboard", "Manager");
@@ -103,6 +121,11 @@ namespace Gamesgiftshop.Controllers
             if (user.Role == "Staff")
             {
                 return RedirectToAction("Dashboard", "Staff");
+            }
+
+            if (user.Role == "Accountant")
+            {
+                return RedirectToAction("Dashboard", "Accounting");
             }
 
             return RedirectToAction("Index", "Home");
@@ -219,11 +242,14 @@ namespace Gamesgiftshop.Controllers
 
             // อัปเดตคุกกี้ล็อกอินใหม่
             var currentEmail = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value ?? "";
+            var currentRole = currentUser?.Role ??
+                User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value ??
+                "User";
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, username ?? "Customer"),
                 new Claim(ClaimTypes.Email, currentEmail),
-                new Claim(ClaimTypes.Role, "User")
+                new Claim(ClaimTypes.Role, currentRole)
             };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

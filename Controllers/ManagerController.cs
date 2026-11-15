@@ -8,11 +8,12 @@ using Gamesgiftshop.Models;
 
 namespace Gamesgiftshop.Controllers
 {
-    [Authorize(Roles = "Manager")]
+    [Authorize(Roles = "Manager,Admin")]
     public class ManagerController : Controller
     {
         private readonly Csi402dbContext _db;
         private static readonly string[] PromotionTypes = { "Coupon", "Tier", "FlashSale", "BuyXGetY" };
+        private static readonly string[] ProductBadgeTypes = { "", "BestSeller", "New", "Hot", "Discount" };
 
         public ManagerController(Csi402dbContext db)
         {
@@ -71,6 +72,12 @@ namespace Gamesgiftshop.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Create(Product product, List<string> ImageUrls)
         {
+            if (!ProductBadgeTypes.Contains(product.BadgeType ?? ""))
+                ModelState.AddModelError(nameof(product.BadgeType), "ป้ายสินค้าไม่ถูกต้อง");
+            if (product.BadgeType == "Discount" &&
+                (!product.OriginalPrice.HasValue || product.OriginalPrice <= product.Price))
+                ModelState.AddModelError(nameof(product.BadgeType), "ป้ายลดราคาต้องกำหนดราคาเต็มสูงกว่าราคาขาย");
+
             if (ModelState.IsValid)
             {
                 // ==========================================
@@ -128,6 +135,12 @@ namespace Gamesgiftshop.Controllers
                 return NotFound();
             }
 
+            if (!ProductBadgeTypes.Contains(data.BadgeType ?? ""))
+                ModelState.AddModelError(nameof(data.BadgeType), "ป้ายสินค้าไม่ถูกต้อง");
+            if (data.BadgeType == "Discount" &&
+                (!data.OriginalPrice.HasValue || data.OriginalPrice <= data.Price))
+                ModelState.AddModelError(nameof(data.BadgeType), "ป้ายลดราคาต้องกำหนดราคาเต็มสูงกว่าราคาขาย");
+
             if (ModelState.IsValid)
             {
                 // 1. ดึงข้อมูลสินค้าเดิมจากฐานข้อมูล
@@ -145,6 +158,7 @@ namespace Gamesgiftshop.Controllers
                 existingProduct.StockQuantity = data.StockQuantity;
                 existingProduct.Description = data.Description;
                 existingProduct.WarrantyInfo = data.WarrantyInfo;
+                existingProduct.BadgeType = data.BadgeType;
 
                 // 3. จัดการรูปลิงก์หลายรูป
                 if (ImageUrls != null && ImageUrls.Any())
@@ -171,6 +185,31 @@ namespace Gamesgiftshop.Controllers
             ViewBag.Categories = _db.Products.Select(p => p.Category).Distinct().ToList();
             return View(data);
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult UpdateProductBadge(int id, string? badgeType)
+        {
+            badgeType = string.IsNullOrWhiteSpace(badgeType) ? null : badgeType.Trim();
+            if (!ProductBadgeTypes.Contains(badgeType ?? ""))
+                return BadRequest();
+
+            var product = _db.Products.FirstOrDefault(item => item.ProductId == id);
+            if (product == null)
+                return NotFound();
+
+            if (badgeType == "Discount" &&
+                (!product.OriginalPrice.HasValue || product.OriginalPrice <= product.Price))
+            {
+                TempData["ProductBadgeError"] = $"สินค้า {product.Name} ต้องตั้งราคาเต็มสูงกว่าราคาขายก่อนเลือกป้ายลดราคา";
+                return RedirectToAction(nameof(Products));
+            }
+
+            product.BadgeType = badgeType;
+            _db.SaveChanges();
+            TempData["ProductBadgeSuccess"] = $"บันทึกป้ายสินค้า {product.Name} แล้ว";
+            return RedirectToAction(nameof(Products));
+        }
         
         [HttpPost]
         public IActionResult DeleteProduct(int id)
@@ -185,7 +224,7 @@ namespace Gamesgiftshop.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager,Admin")]
         public IActionResult Promotions()
         {
             ViewBag.Categories = _db.Products
@@ -198,7 +237,7 @@ namespace Gamesgiftshop.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager,Admin")]
         [ValidateAntiForgeryToken]
         public IActionResult CreatePromotion(Promotion promotion)
         {
@@ -271,7 +310,7 @@ namespace Gamesgiftshop.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager,Admin")]
         [ValidateAntiForgeryToken]
         public IActionResult TogglePromotion(int id)
         {
@@ -284,7 +323,7 @@ namespace Gamesgiftshop.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager,Admin")]
         [ValidateAntiForgeryToken]
         public IActionResult DeletePromotion(int id)
         {
@@ -297,7 +336,7 @@ namespace Gamesgiftshop.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager,Admin")]
         public IActionResult Reports(string? startDate, string? endDate)
         {
             var today = DateTime.Today;
@@ -386,9 +425,13 @@ namespace Gamesgiftshop.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager,Admin")]
         public IActionResult Users(string? search, string? role)
         {
+            if (User.IsInRole("Admin"))
+                return RedirectToAction("Users", "Admin");
+
+            var canBootstrapAdmin = !_db.Users.AsNoTracking().Any(user => user.Role == "Admin");
             var usersQuery = _db.Users.AsNoTracking();
             var trimmedSearch = search?.Trim();
             if (!string.IsNullOrEmpty(trimmedSearch))
@@ -397,7 +440,8 @@ namespace Gamesgiftshop.Controllers
                     user.Username.Contains(trimmedSearch) || user.Email.Contains(trimmedSearch));
             }
 
-            if (role == "User" || role == "Manager" || role == "Staff")
+            if (role == "User" || role == "Manager" || role == "Staff" || role == "Accountant" ||
+                (role == "Admin" && canBootstrapAdmin))
                 usersQuery = usersQuery.Where(user => user.Role == role);
 
             var users = usersQuery.OrderBy(user => user.Username).ToList();
@@ -409,8 +453,9 @@ namespace Gamesgiftshop.Controllers
             return View(new ManagerUsersViewModel
             {
                 Search = trimmedSearch,
-                RoleFilter = role,
+                RoleFilter = role == "Admin" && !canBootstrapAdmin ? null : role,
                 CurrentUsername = User.Identity?.Name,
+                CanBootstrapAdmin = canBootstrapAdmin,
                 Users = users.Select(user => new ManagerUserRow
                 {
                     UserId = user.UserId,
@@ -423,33 +468,250 @@ namespace Gamesgiftshop.Controllers
             });
         }
 
+        [HttpGet]
+        [Authorize(Roles = "Manager,Admin")]
+        public IActionResult CreateUser(string? search, string? roleFilter)
+        {
+            if (User.IsInRole("Admin"))
+                return RedirectToAction("CreateUser", "Admin", new { search, roleFilter });
+
+            var canBootstrapAdmin = !_db.Users.AsNoTracking().Any(user => user.Role == "Admin");
+            var roles = new List<string> { "User", "Staff", "Accountant", "Manager" };
+            if (canBootstrapAdmin)
+                roles.Add("Admin");
+
+            return View("~/Views/Shared/UserManagementForm.cshtml", new UserManagementFormViewModel
+            {
+                Role = "User",
+                AvailableRoles = roles,
+                Search = search,
+                RoleFilter = roleFilter
+            });
+        }
+
         [HttpPost]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager,Admin")]
+        [ValidateAntiForgeryToken]
+        public IActionResult CreateUser(UserManagementFormViewModel model)
+        {
+            if (User.IsInRole("Admin"))
+                return RedirectToAction("CreateUser", "Admin", new { search = model.Search, roleFilter = model.RoleFilter });
+
+            var canBootstrapAdmin = !_db.Users.AsNoTracking().Any(user => user.Role == "Admin");
+            model.AvailableRoles = new List<string> { "User", "Staff", "Accountant", "Manager" };
+            if (canBootstrapAdmin)
+                model.AvailableRoles.Add("Admin");
+            model.IsEdit = false;
+            model.Username = model.Username?.Trim() ?? "";
+            model.Email = model.Email?.Trim() ?? "";
+            model.Phone = string.IsNullOrWhiteSpace(model.Phone) ? null : model.Phone.Trim();
+
+            if (string.IsNullOrWhiteSpace(model.Password) || model.Password.Length < 6)
+                ModelState.AddModelError(nameof(model.Password), "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร");
+            if (!model.AvailableRoles.Contains(model.Role))
+                ModelState.AddModelError(nameof(model.Role), "สิทธิ์ที่เลือกไม่ถูกต้อง");
+            if (_db.Users.Any(user => user.Username == model.Username))
+                ModelState.AddModelError(nameof(model.Username), "ชื่อผู้ใช้นี้มีผู้ใช้งานแล้ว");
+            if (_db.Users.Any(user => user.Email == model.Email))
+                ModelState.AddModelError(nameof(model.Email), "อีเมลนี้มีผู้ใช้งานแล้ว");
+
+            if (!ModelState.IsValid)
+                return View("~/Views/Shared/UserManagementForm.cshtml", model);
+
+            _db.Users.Add(new User
+            {
+                Username = model.Username.Trim(),
+                Email = model.Email.Trim(),
+                Phone = string.IsNullOrWhiteSpace(model.Phone) ? null : model.Phone.Trim(),
+                Password = model.Password!,
+                Role = model.Role
+            });
+            _db.SaveChanges();
+
+            TempData["UserManagementSuccess"] = "เพิ่มบัญชีผู้ใช้เรียบร้อยแล้ว";
+            return RedirectToAction(nameof(Users), new { search = model.Search, role = model.RoleFilter });
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Manager,Admin")]
+        public IActionResult EditUser(int id, string? search, string? roleFilter)
+        {
+            if (User.IsInRole("Admin"))
+                return RedirectToAction("EditUser", "Admin", new { id, search, roleFilter });
+
+            var user = _db.Users.AsNoTracking().FirstOrDefault(item => item.UserId == id);
+            if (user == null)
+                return NotFound();
+            if (user.Role == "Admin" || user.Username == User.Identity?.Name)
+            {
+                TempData["UserManagementError"] = "ไม่สามารถแก้ไขบัญชี Admin หรือบัญชีที่กำลังใช้งานอยู่ได้";
+                return RedirectToAction(nameof(Users), new { search, role = roleFilter });
+            }
+
+            var roles = new List<string> { "User", "Staff", "Accountant", "Manager" };
+            if (!_db.Users.AsNoTracking().Any(item => item.Role == "Admin"))
+                roles.Add("Admin");
+
+            return View("~/Views/Shared/UserManagementForm.cshtml", new UserManagementFormViewModel
+            {
+                UserId = user.UserId,
+                Username = user.Username,
+                Email = user.Email,
+                Phone = user.Phone,
+                Role = user.Role,
+                IsEdit = true,
+                AvailableRoles = roles,
+                Search = search,
+                RoleFilter = roleFilter
+            });
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Manager,Admin")]
+        [ValidateAntiForgeryToken]
+        public IActionResult EditUser(UserManagementFormViewModel model)
+        {
+            if (User.IsInRole("Admin"))
+                return RedirectToAction("EditUser", "Admin", new { id = model.UserId, search = model.Search, roleFilter = model.RoleFilter });
+
+            var user = _db.Users.FirstOrDefault(item => item.UserId == model.UserId);
+            if (user == null)
+                return NotFound();
+            if (user.Role == "Admin" || user.Username == User.Identity?.Name)
+            {
+                TempData["UserManagementError"] = "ไม่สามารถแก้ไขบัญชี Admin หรือบัญชีที่กำลังใช้งานอยู่ได้";
+                return RedirectToAction(nameof(Users), new { search = model.Search, role = model.RoleFilter });
+            }
+
+            model.IsEdit = true;
+            model.AvailableRoles = new List<string> { "User", "Staff", "Accountant", "Manager" };
+            if (!_db.Users.AsNoTracking().Any(item => item.Role == "Admin"))
+                model.AvailableRoles.Add("Admin");
+            model.Username = model.Username?.Trim() ?? "";
+            model.Email = model.Email?.Trim() ?? "";
+            model.Phone = string.IsNullOrWhiteSpace(model.Phone) ? null : model.Phone.Trim();
+
+            if (!string.IsNullOrEmpty(model.Password) && model.Password.Length < 6)
+                ModelState.AddModelError(nameof(model.Password), "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร");
+            if (!model.AvailableRoles.Contains(model.Role))
+                ModelState.AddModelError(nameof(model.Role), "สิทธิ์ที่เลือกไม่ถูกต้อง");
+            if (_db.Users.Any(item => item.UserId != model.UserId && item.Username == model.Username))
+                ModelState.AddModelError(nameof(model.Username), "ชื่อผู้ใช้นี้มีผู้ใช้งานแล้ว");
+            if (_db.Users.Any(item => item.UserId != model.UserId && item.Email == model.Email))
+                ModelState.AddModelError(nameof(model.Email), "อีเมลนี้มีผู้ใช้งานแล้ว");
+            if (user.Role == "Manager" && model.Role != "Manager" &&
+                _db.Users.Count(item => item.Role == "Manager") <= 1 &&
+                !_db.Users.Any(item => item.Role == "Admin") &&
+                model.Role != "Admin")
+                ModelState.AddModelError(nameof(model.Role), "ต้องมีผู้จัดการหรือ Admin อย่างน้อยหนึ่งบัญชี");
+
+            if (!ModelState.IsValid)
+                return View("~/Views/Shared/UserManagementForm.cshtml", model);
+
+            var roleChanged = user.Role != model.Role;
+            user.Username = model.Username.Trim();
+            user.Email = model.Email.Trim();
+            user.Phone = string.IsNullOrWhiteSpace(model.Phone) ? null : model.Phone.Trim();
+            user.Role = model.Role;
+            if (!string.IsNullOrEmpty(model.Password))
+                user.Password = model.Password;
+            _db.SaveChanges();
+
+            TempData["UserManagementSuccess"] = roleChanged
+                ? "แก้ไขบัญชีเรียบร้อยแล้ว ผู้ใช้ต้องเข้าสู่ระบบใหม่เพื่อรับสิทธิ์ใหม่"
+                : "แก้ไขบัญชีผู้ใช้เรียบร้อยแล้ว";
+            return RedirectToAction(nameof(Users), new { search = model.Search, role = model.RoleFilter });
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Manager,Admin")]
+        [ValidateAntiForgeryToken]
+        public IActionResult DeleteUser(int userId, string? search, string? roleFilter)
+        {
+            if (User.IsInRole("Admin"))
+                return RedirectToAction("Users", "Admin", new { search, role = roleFilter });
+
+            var user = _db.Users.FirstOrDefault(item => item.UserId == userId);
+            if (user == null)
+                return NotFound();
+            if (user.Role == "Admin")
+            {
+                TempData["UserManagementError"] = "Manager ไม่สามารถลบบัญชี Admin ได้";
+                return RedirectToAction(nameof(Users), new { search, role = roleFilter });
+            }
+            if (user.Username == User.Identity?.Name)
+            {
+                TempData["UserManagementError"] = "ไม่สามารถลบบัญชีที่กำลังใช้งานอยู่ได้";
+                return RedirectToAction(nameof(Users), new { search, role = roleFilter });
+            }
+            if (user.Role == "Manager" &&
+                _db.Users.Count(item => item.Role == "Manager") <= 1 &&
+                !_db.Users.Any(item => item.Role == "Admin"))
+            {
+                TempData["UserManagementError"] = "ต้องมีผู้จัดการหรือ Admin อย่างน้อยหนึ่งบัญชี";
+                return RedirectToAction(nameof(Users), new { search, role = roleFilter });
+            }
+            if (_db.Orders.AsNoTracking().Any(order => order.UserId == user.UserId))
+            {
+                TempData["UserManagementError"] = "ลบบัญชีนี้ไม่ได้ เนื่องจากมีประวัติคำสั่งซื้อ ระบบจะเก็บบัญชีไว้เพื่อรักษาประวัติ";
+                return RedirectToAction(nameof(Users), new { search, role = roleFilter });
+            }
+
+            var addresses = _db.Useraddresses.Where(address => address.UserId == user.UserId).ToList();
+            _db.Useraddresses.RemoveRange(addresses);
+            _db.Users.Remove(user);
+            _db.SaveChanges();
+
+            TempData["UserManagementSuccess"] = "ลบบัญชีผู้ใช้เรียบร้อยแล้ว";
+            return RedirectToAction(nameof(Users), new { search, role = roleFilter });
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Manager,Admin")]
         [ValidateAntiForgeryToken]
         public IActionResult UpdateUserRole(int userId, string newRole, string? search, string? roleFilter)
         {
-            if (newRole != "User" && newRole != "Manager" && newRole != "Staff")
+            if (User.IsInRole("Admin"))
+                return RedirectToAction("Users", "Admin", new { search, role = roleFilter });
+
+            var canBootstrapAdmin = !_db.Users.AsNoTracking().Any(item => item.Role == "Admin");
+            if (newRole != "User" && newRole != "Manager" && newRole != "Staff" && newRole != "Accountant" &&
+                !(newRole == "Admin" && canBootstrapAdmin))
                 return BadRequest();
 
             var user = _db.Users.FirstOrDefault(item => item.UserId == userId);
             if (user == null) return NotFound();
 
-            if (user.Username == User.Identity?.Name && newRole != "Manager")
+            if (user.Role == "Admin")
+            {
+                TempData["UserManagementError"] = "จัดการสิทธิ์ Admin ได้จากหน้า Admin เท่านั้น";
+                return RedirectToAction(nameof(Users), new { search, role = roleFilter });
+            }
+
+            var isSelfBootstrap = user.Username == User.Identity?.Name &&
+                newRole == "Admin" &&
+                canBootstrapAdmin;
+            if (user.Username == User.Identity?.Name && newRole != "Manager" && !isSelfBootstrap)
             {
                 TempData["UserManagementError"] = "ไม่สามารถลดสิทธิ์บัญชีที่กำลังใช้งานอยู่ได้";
                 return RedirectToAction(nameof(Users), new { search, role = roleFilter });
             }
 
-            if (user.Role == "Manager" && newRole == "User" &&
-                _db.Users.Count(item => item.Role == "Manager") <= 1)
+            if (user.Role == "Manager" && newRole != "Manager" &&
+                _db.Users.Count(item => item.Role == "Manager") <= 1 &&
+                !_db.Users.Any(item => item.Role == "Admin") &&
+                newRole != "Admin")
             {
-                TempData["UserManagementError"] = "ต้องมีผู้จัดการอย่างน้อยหนึ่งบัญชี";
+                TempData["UserManagementError"] = "ต้องมีผู้จัดการหรือ Admin อย่างน้อยหนึ่งบัญชี";
                 return RedirectToAction(nameof(Users), new { search, role = roleFilter });
             }
 
             user.Role = newRole;
             _db.SaveChanges();
-            TempData["UserManagementSuccess"] = "อัปเดตสิทธิ์บัญชีเรียบร้อยแล้ว";
+            TempData["UserManagementSuccess"] = "อัปเดตสิทธิ์บัญชีเรียบร้อยแล้ว ผู้ใช้ต้องเข้าสู่ระบบใหม่เพื่อรับสิทธิ์ใหม่";
+            if (isSelfBootstrap)
+                return RedirectToAction("Logout", "Account");
+
             return RedirectToAction(nameof(Users), new { search, role = roleFilter });
         }
     }

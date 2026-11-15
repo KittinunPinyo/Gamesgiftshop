@@ -169,6 +169,7 @@
     .bg-bestseller { background: linear-gradient(135deg, #d946ef 0%, #c026d3 100%); } 
     .bg-hot { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); } 
     .bg-new { background: linear-gradient(135deg, #10b981 0%, #059669 100%); } 
+    .bg-sale { background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); }
 
     /* ป้าย Badge (ส่วนลดขวาบน) */
     .badge-discount {
@@ -363,20 +364,26 @@
         {
             @foreach (var item in Model)
             {
-                // ตรวจสอบเงื่อนไขการแสดงป้าย ซ้ายบน
-                string badgeText = "";
-                string badgeClass = "";
-                
-                if (item.ReviewCount > 150) {
-                    badgeText = "ขายดี";
-                    badgeClass = "bg-bestseller";
-                } else if (item.ReviewCount > 50) {
-                    badgeText = "ฮิต";
-                    badgeClass = "bg-hot";
-                } else if (item.ReviewCount < 10) { 
-                    badgeText = "ใหม่";
-                    badgeClass = "bg-new";
-                }
+                var hasDiscount = item.OriginalPrice.HasValue && item.OriginalPrice > item.Price;
+                var discountPercent = hasDiscount
+                    ? Math.Round((1 - (item.Price / item.OriginalPrice!.Value)) * 100)
+                    : 0;
+                var badgeText = item.BadgeType switch
+                {
+                    "BestSeller" => "ขายดี",
+                    "New" => "ใหม่",
+                    "Hot" => "ฮิต",
+                    "Discount" when hasDiscount => $"ลด {discountPercent:0}%",
+                    _ => ""
+                };
+                var badgeClass = item.BadgeType switch
+                {
+                    "BestSeller" => "bg-bestseller",
+                    "New" => "bg-new",
+                    "Hot" => "bg-hot",
+                    "Discount" => "bg-sale",
+                    _ => ""
+                };
 
                 <div class="col product-item" data-category="@item.Category">
                     <div class="card h-100 product-card border-0 text-white">
@@ -389,9 +396,9 @@
                                 <span class="badge-status @badgeClass">@badgeText</span>
                             }
 
-                            @if (item.OriginalPrice.HasValue && item.OriginalPrice > item.Price)
+                            @if (hasDiscount)
                             {
-                                var discount = Math.Round((1 - (item.Price / item.OriginalPrice.Value)) * 100);
+                                var discount = discountPercent;
                                 <span class="badge-discount">-@discount%</span>
                             }
                             
@@ -446,73 +453,6 @@
         </div>
     </div>
 
-    <!-- 5. Active Promotions -->
-    @if (activePromotions.Any())
-    {
-        <div class="flash-deal-banner flex-column flex-lg-row align-items-stretch gap-4 mt-5">
-            <div class="d-flex align-items-center">
-                <div class="promo-banner-icon me-3"><i class="fa-solid fa-ticket"></i></div>
-                <div>
-                    <h5 class="fw-bold mb-1">โปรโมชั่นที่กำลังใช้งาน</h5>
-                    <p class="mb-0 promo-banner-description">เลื่อนดูส่วนลดและคัดลอกโค้ดที่ร่วมรายการ</p>
-                </div>
-            </div>
-            <div class="promo-code-carousel" id="active-coupon-carousel" role="region" aria-label="โปรโมชั่นที่กำลังใช้งาน">
-                <div class="promo-code-slides" aria-live="polite" aria-atomic="true">
-                    @for (var index = 0; index < activePromotions.Count; index++)
-                    {
-                        var promotion = activePromotions[index];
-                        var promotionTitle = GetPromotionTitle(promotion);
-                        var promotionDetails = GetPromotionDetails(promotion);
-                        <div class="promo-code-slide @(index == 0 ? "active" : "")"
-                             data-promo-slide="@index"
-                             data-promo-kind="@GetPromotionKind(promotion)"
-                             data-promo-title="@promotionTitle"
-                             data-promo-detail="@promotionDetails"
-                             role="group"
-                             aria-roledescription="สไลด์"
-                             aria-label="โปรโมชั่น @(index + 1) จาก @activePromotions.Count"
-                             aria-hidden="@(index == 0 ? "false" : "true")">
-                            <div class="promo-code-entry">
-                                <div class="promo-code-details">
-                                    <span class="promo-code-value">@GetPromotionKind(promotion): @promotionTitle</span>
-                                    <span class="promo-code-description">@promotion.Name · @promotionDetails</span>
-                                </div>
-                                @if (!string.IsNullOrWhiteSpace(promotion.Code))
-                                {
-                                    <button type="button" class="btn btn-copy-code" data-promo-code="@promotion.Code">
-                                        <i class="fa-regular fa-copy me-1"></i><span class="copy-label">คัดลอก</span>
-                                    </button>
-                                }
-                            </div>
-                        </div>
-                    }
-                </div>
-                @if (activePromotions.Count > 1)
-                {
-                    <div class="promo-carousel-controls" aria-label="เปลี่ยนโปรโมชั่น">
-                        <button type="button" class="promo-carousel-arrow" data-promo-previous aria-label="โปรโมชั่นก่อนหน้า">
-                            <i class="fa-solid fa-chevron-left"></i>
-                        </button>
-                        <div class="promo-carousel-indicators">
-                            @for (var index = 0; index < activePromotions.Count; index++)
-                            {
-                                <button type="button"
-                                        class="promo-carousel-indicator @(index == 0 ? "active" : "")"
-                                        data-promo-to="@index"
-                                        aria-label="แสดงโปรโมชั่น @GetPromotionTitle(activePromotions[index])"
-                                        aria-pressed="@(index == 0 ? "true" : "false")"></button>
-                            }
-                        </div>
-                        <button type="button" class="promo-carousel-arrow" data-promo-next aria-label="โปรโมชั่นถัดไป">
-                            <i class="fa-solid fa-chevron-right"></i>
-                        </button>
-                    </div>
-                }
-            </div>
-        </div>
-    }
-
 </div>
 
 <!-- Scripts สำหรับ Category Filter และ Copy Code -->
@@ -536,14 +476,7 @@
         const heroCarousel = document.getElementById('hero-promo-carousel');
         if (heroCarousel) {
             const heroSlides = Array.from(heroCarousel.querySelectorAll('[data-hero-promo-slide]'));
-            const promoCarousel = document.getElementById('active-coupon-carousel');
-            const promoSlides = promoCarousel
-                ? Array.from(promoCarousel.querySelectorAll('[data-promo-slide]'))
-                : [];
-            const indicatorGroups = [
-                Array.from(heroCarousel.querySelectorAll('[data-hero-promo-to]')),
-                promoCarousel ? Array.from(promoCarousel.querySelectorAll('[data-promo-to]')) : []
-            ];
+            const indicators = Array.from(heroCarousel.querySelectorAll('[data-hero-promo-to]'));
             let activePromoIndex = 0;
 
             const showPromo = (index) => {
@@ -553,16 +486,11 @@
                     slide.classList.toggle('active', isActive);
                     slide.setAttribute('aria-hidden', String(!isActive));
                 });
-                promoSlides.forEach((slide, slideIndex) => {
-                    const isActive = slideIndex === activePromoIndex;
-                    slide.classList.toggle('active', isActive);
-                    slide.setAttribute('aria-hidden', String(!isActive));
-                });
-                indicatorGroups.forEach(indicators => indicators.forEach((indicator, indicatorIndex) => {
+                indicators.forEach((indicator, indicatorIndex) => {
                     const isActive = indicatorIndex === activePromoIndex;
                     indicator.classList.toggle('active', isActive);
                     indicator.setAttribute('aria-pressed', String(isActive));
-                }));
+                });
                 const position = heroCarousel.querySelector('[data-hero-promo-position]');
                 if (position) position.textContent = `${activePromoIndex + 1}/${heroSlides.length}`;
             };
@@ -575,15 +503,6 @@
             });
             heroCarousel.querySelectorAll('[data-hero-promo-to]').forEach(indicator => {
                 indicator.addEventListener('click', () => showPromo(Number(indicator.dataset.heroPromoTo)));
-            });
-            promoCarousel?.querySelector('[data-promo-previous]')?.addEventListener('click', () => {
-                showPromo(activePromoIndex - 1);
-            });
-            promoCarousel?.querySelector('[data-promo-next]')?.addEventListener('click', () => {
-                showPromo(activePromoIndex + 1);
-            });
-            promoCarousel?.querySelectorAll('[data-promo-to]').forEach(indicator => {
-                indicator.addEventListener('click', () => showPromo(Number(indicator.dataset.promoTo)));
             });
         }
 

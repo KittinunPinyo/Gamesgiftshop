@@ -1,0 +1,190 @@
+@model Gamesgiftshop.Models.AccountingDashboardViewModel
+@using System.Globalization
+@{
+    Layout = "_AccountingLayout";
+    ViewData["Title"] = "บัญชีรายรับรายจ่าย";
+    var monthValue = Model.Month.ToString("yyyy-MM", CultureInfo.InvariantCulture);
+}
+
+<style>
+    .accounting-card { background: #fff; border: 0; border-radius: 16px; box-shadow: 0 6px 22px rgba(28, 73, 62, .07); }
+    .accounting-card h2 { color: #173a35; }
+    .accounting-label { color: #71858a; font-size: .9rem; }
+    .accounting-value { margin-top: 6px; color: #176b58; font-size: 1.7rem; font-weight: 800; }
+    .accounting-icon { display: grid; width: 44px; height: 44px; place-items: center; color: #176b58; background: #e8f5f0; border-radius: 13px; }
+    .amount-income { color: #16835d; font-weight: 700; }
+    .amount-expense { color: #c34252; font-weight: 700; }
+    .ledger-table th { color: #6b7f81; font-size: .85rem; font-weight: 600; white-space: nowrap; }
+</style>
+
+<div class="accounting-page-heading">
+    <div class="accounting-page-icon"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i></div>
+    <div>
+        <div class="accounting-eyebrow">FINANCE OVERVIEW</div>
+        <h1 class="h3 fw-bold mb-1">บัญชีรายรับรายจ่าย</h1>
+        <p>จัดการธุรกรรม ตรวจสอบยอดขาย และสรุปผลประกอบการรายเดือน</p>
+    </div>
+</div>
+
+@if (TempData["AccountingSuccess"] != null)
+{
+    <div class="alert alert-success">@TempData["AccountingSuccess"]</div>
+}
+@if (TempData["AccountingError"] != null)
+{
+    <div class="alert alert-danger">@TempData["AccountingError"]</div>
+}
+
+<section class="accounting-card accounting-period-card p-4 mb-4">
+    <form method="get" asp-action="Dashboard" class="row g-3 align-items-end">
+        <div class="col-sm-6 col-md-4">
+            <label class="form-label" for="month">สรุปประจำเดือน</label>
+            <input class="form-control" type="month" id="month" name="month" value="@monthValue" />
+        </div>
+        <div class="col-sm-4 col-md-2">
+            <button type="submit" class="btn btn-success w-100"><i class="fa-solid fa-filter me-1"></i> ดูสรุป</button>
+        </div>
+        <div class="col-12 text-muted small">เดือน @Model.Month.ToString("MMMM yyyy", CultureInfo.GetCultureInfo("th-TH"))</div>
+    </form>
+</section>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <section class="accounting-card accounting-metric-card accounting-revenue-metric p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div><div class="accounting-label">รายรับจากยอดขาย</div><div class="accounting-value">฿@Model.Revenue.ToString("N2")</div></div>
+                <div class="accounting-icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+            </div>
+        </section>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <section class="accounting-card accounting-metric-card accounting-expense-metric p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div><div class="accounting-label">รายจ่าย</div><div class="accounting-value text-danger">฿@Model.ExpenseTotal.ToString("N2")</div></div>
+                <div class="accounting-icon text-danger bg-danger-subtle"><i class="fa-solid fa-arrow-trend-down"></i></div>
+            </div>
+        </section>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <section class="accounting-card accounting-metric-card accounting-net-metric p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div><div class="accounting-label">คงเหลือสุทธิ</div><div class="accounting-value @(Model.NetIncome < 0 ? "text-danger" : "")">฿@Model.NetIncome.ToString("N2")</div></div>
+                <div class="accounting-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+            </div>
+        </section>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <section class="accounting-card accounting-metric-card accounting-orders-metric p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div><div class="accounting-label">ออเดอร์ที่ชำระแล้ว</div><div class="accounting-value">@Model.PaidOrderCount.ToString("N0")</div></div>
+                <div class="accounting-icon"><i class="fa-solid fa-receipt"></i></div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-xl-5">
+        <section class="accounting-card accounting-work-card p-4 h-100">
+            <h2 class="h5 fw-bold mb-3"><i class="fa-solid fa-circle-plus me-2"></i>บันทึกรายจ่าย</h2>
+            <form asp-action="AddExpense" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="month" value="@monthValue" />
+                <div class="mb-3">
+                    <label class="form-label" for="description">รายละเอียด</label>
+                    <input class="form-control" id="description" name="description" maxlength="200" required placeholder="เช่น ค่าบรรจุภัณฑ์" />
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="category">หมวดหมู่</label>
+                        <input class="form-control" id="category" name="category" maxlength="80" required placeholder="เช่น ค่าขนส่ง" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="amount">จำนวนเงิน (บาท)</label>
+                        <input class="form-control" id="amount" name="amount" type="number" min="0.01" max="99999999.99" step="0.01" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="expenseDate">วันที่จ่าย</label>
+                        <input class="form-control" id="expenseDate" name="expenseDate" type="date" value="@Model.Month.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)" required />
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <button class="btn btn-success w-100" type="submit"><i class="fa-solid fa-plus me-1"></i> เพิ่มรายจ่าย</button>
+                    </div>
+                </div>
+            </form>
+        </section>
+    </div>
+    <div class="col-xl-7">
+        <section class="accounting-card accounting-work-card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 fw-bold mb-0"><i class="fa-solid fa-receipt me-2"></i>รายการรายจ่าย</h2>
+                <span class="badge text-bg-danger">@Model.Expenses.Count รายการ</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table ledger-table align-middle mb-0">
+                    <thead><tr><th>วันที่</th><th>รายละเอียด / หมวดหมู่</th><th class="text-end">จำนวนเงิน</th><th></th></tr></thead>
+                    <tbody>
+                    @if (Model.Expenses.Any())
+                    {
+                        foreach (var expense in Model.Expenses)
+                        {
+                            <tr>
+                                <td>@expense.ExpenseDate.ToString("dd/MM/yyyy")</td>
+                                <td><span class="fw-semibold">@expense.Description</span><div class="small text-muted">@expense.Category</div></td>
+                                <td class="text-end amount-expense">฿@expense.Amount.ToString("N2")</td>
+                                <td class="text-end">
+                                    <form asp-action="DeleteExpense" method="post" onsubmit="return confirm('ยืนยันลบรายการนี้หรือไม่?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@expense.AccountingExpenseId" />
+                                        <input type="hidden" name="month" value="@monthValue" />
+                                        <button class="btn btn-sm btn-outline-danger" type="submit" aria-label="ลบ @expense.Description"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr><td colspan="4" class="text-center text-muted py-4">ไม่มีรายการรายจ่ายในเดือนนี้</td></tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+
+<section class="accounting-card accounting-ledger-card p-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h2 class="h5 fw-bold mb-1"><i class="fa-solid fa-arrow-trend-up me-2"></i>ธุรกรรมรายรับจากคำสั่งซื้อ</h2>
+            <div class="small text-muted">รวมเฉพาะออเดอร์ที่ชำระแล้วและอยู่ระหว่างจัดส่งหรือจัดส่งแล้ว</div>
+        </div>
+        <span class="badge text-bg-success">@Model.SalesTransactions.Count รายการ</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table ledger-table table-hover align-middle mb-0">
+            <thead><tr><th>วันที่</th><th>ออเดอร์</th><th>สินค้า</th><th>สถานะ</th><th class="text-end">ยอดรับ</th></tr></thead>
+            <tbody>
+            @if (Model.SalesTransactions.Any())
+            {
+                foreach (var order in Model.SalesTransactions)
+                {
+                    var productSummary = string.Join(", ", order.Orderdetails.Select(detail => $"{detail.Product?.Name ?? "สินค้า"} × {detail.Quantity}"));
+                    <tr>
+                        <td>@order.OrderDate?.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td class="fw-semibold">#@order.OrderId</td>
+                        <td>@productSummary</td>
+                        <td><span class="badge text-bg-light">@order.Status</span></td>
+                        <td class="text-end amount-income">฿@order.TotalAmount.ToString("N2")</td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="5" class="text-center text-muted py-5">ไม่พบธุรกรรมรายรับในเดือนนี้</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</section>

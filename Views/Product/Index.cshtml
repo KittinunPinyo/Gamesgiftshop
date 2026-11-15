@@ -126,6 +126,7 @@
     .bg-bestseller { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); } 
     .bg-hot { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); } 
     .bg-new { background: linear-gradient(135deg, #10b981 0%, #059669 100%); } 
+    .bg-sale { background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); }
 
     .badge-discount { position: absolute; top: 15px; right: 15px; background-color: rgba(34, 38, 49, 0.95); border-radius: 20px; padding: 6px 12px; font-size: 0.75rem; font-weight: 800; color: #fbbf24; z-index: 2; box-shadow: 0 4px 10px rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
     
@@ -222,20 +223,26 @@
                 {
                     @foreach (var item in Model)
                     {
-                        string badgeText = "";
-                        string badgeClass = "";
-                        
-                        // เงื่อนไขติดป้าย
-                        if (item.ReviewCount > 150) {
-                            badgeText = "ขายดี";
-                            badgeClass = "bg-bestseller";
-                        } else if (item.ReviewCount > 50) {
-                            badgeText = "ฮิต";
-                            badgeClass = "bg-hot";
-                        } else if (item.ReviewCount < 10) { 
-                            badgeText = "ใหม่";
-                            badgeClass = "bg-new";
-                        }
+                        var hasDiscount = item.OriginalPrice.HasValue && item.OriginalPrice > item.Price;
+                        var discountPercent = hasDiscount
+                            ? Math.Round((1 - (item.Price / item.OriginalPrice!.Value)) * 100)
+                            : 0;
+                        var badgeText = item.BadgeType switch
+                        {
+                            "BestSeller" => "ขายดี",
+                            "New" => "ใหม่",
+                            "Hot" => "ฮิต",
+                            "Discount" when hasDiscount => $"ลด {discountPercent:0}%",
+                            _ => ""
+                        };
+                        var badgeClass = item.BadgeType switch
+                        {
+                            "BestSeller" => "bg-bestseller",
+                            "New" => "bg-new",
+                            "Hot" => "bg-hot",
+                            "Discount" => "bg-sale",
+                            _ => ""
+                        };
 
                         <div class="col product-item">
                             <div class="card h-100 product-card border-0">
@@ -247,9 +254,9 @@
                                         <span class="badge-status @badgeClass">@badgeText</span>
                                     }
 
-                                    @if (item.OriginalPrice.HasValue && item.OriginalPrice > item.Price)
+                                    @if (hasDiscount)
                                     {
-                                        var discount = Math.Round((1 - (item.Price / item.OriginalPrice.Value)) * 100);
+                                        var discount = discountPercent;
                                         <span class="badge-discount">-@discount%</span>
                                     }
                                     

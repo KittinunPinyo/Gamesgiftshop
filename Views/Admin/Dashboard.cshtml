@@ -1,0 +1,97 @@
+@model Gamesgiftshop.Models.AdminDashboardViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "ภาพรวมระบบ";
+}
+
+<div class="admin-page-heading">
+    <div class="admin-page-icon"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></div>
+    <div>
+        <div class="admin-eyebrow">SYSTEM CONTROL CENTER</div>
+        <h1>ภาพรวมระบบ</h1>
+        <p>ติดตามสถานะผู้ใช้งาน คำสั่งซื้อ สินค้า และผลการดำเนินงานทั้งหมด</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="admin-stat-card">
+            <div class="admin-stat-icon"><i class="fa-solid fa-users" aria-hidden="true"></i></div>
+            <div><div class="admin-stat-label">บัญชีผู้ใช้ทั้งหมด</div><div class="admin-stat-value">@Model.TotalUsers.ToString("N0")</div></div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="admin-stat-card admin-stat-cyan">
+            <div class="admin-stat-icon"><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i></div>
+            <div><div class="admin-stat-label">สินค้าในระบบ</div><div class="admin-stat-value">@Model.ProductCount.ToString("N0")</div></div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="admin-stat-card admin-stat-gold">
+            <div class="admin-stat-icon"><i class="fa-solid fa-receipt" aria-hidden="true"></i></div>
+            <div><div class="admin-stat-label">คำสั่งซื้อทั้งหมด</div><div class="admin-stat-value">@Model.TotalOrders.ToString("N0")</div></div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="admin-stat-card">
+            <div class="admin-stat-icon"><i class="fa-solid fa-sack-dollar" aria-hidden="true"></i></div>
+            <div><div class="admin-stat-label">ยอดรับจากออเดอร์ที่ชำระแล้ว</div><div class="admin-stat-value">฿@Model.PaidRevenue.ToString("N0")</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-xl-5">
+        <section class="admin-panel p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="h5 fw-bold mb-1">บัญชีแยกตามสิทธิ์</h2>
+                    <div class="small text-muted">ภาพรวมการเข้าถึงระบบ</div>
+                </div>
+                <a asp-action="Users" class="btn btn-sm btn-outline-primary">จัดการบัญชี</a>
+            </div>
+            <div class="row g-2">
+                <div class="col-6"><div class="admin-role-summary"><span class="admin-role-badge role-admin">Admin</span><strong>@Model.AdminCount</strong></div></div>
+                <div class="col-6"><div class="admin-role-summary"><span class="admin-role-badge role-manager">Manager</span><strong>@Model.ManagerCount</strong></div></div>
+                <div class="col-6"><div class="admin-role-summary"><span class="admin-role-badge role-staff">Staff</span><strong>@Model.StaffCount</strong></div></div>
+                <div class="col-6"><div class="admin-role-summary"><span class="admin-role-badge role-accountant">Accounting</span><strong>@Model.AccountantCount</strong></div></div>
+                <div class="col-12"><div class="admin-role-summary"><span class="admin-role-badge role-user">User</span><strong>@Model.UserCount</strong></div></div>
+            </div>
+        </section>
+    </div>
+    <div class="col-xl-7">
+        <section class="admin-panel p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h2 class="h5 fw-bold mb-1">สถานะคำสั่งซื้อ</h2>
+                    <div class="small text-muted">จำนวนงานในแต่ละขั้นตอน</div>
+                </div>
+                <a asp-controller="Manager" asp-action="Dashboard" class="btn btn-sm btn-outline-primary">ดูคำสั่งซื้อ</a>
+            </div>
+            <div class="admin-order-status-list">
+                <div><span><i class="fa-solid fa-clock" aria-hidden="true"></i> รอตรวจสอบสลิป</span><strong>@Model.AwaitingReviewOrders</strong></div>
+                <div><span><i class="fa-solid fa-box-open" aria-hidden="true"></i> พร้อมเริ่มจัดเตรียม</span><strong>@Model.ReadyToPackOrders</strong></div>
+                <div><span><i class="fa-solid fa-boxes-packing" aria-hidden="true"></i> กำลังเตรียมจัดส่ง</span><strong>@Model.PreparingShipmentOrders</strong></div>
+                <div><span><i class="fa-solid fa-truck-fast" aria-hidden="true"></i> จัดส่งแล้ว</span><strong>@Model.ShippedOrders</strong></div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<section class="mb-4">
+    <div class="d-flex justify-content-between align-items-end mb-3">
+        <div>
+            <div class="admin-eyebrow">QUICK ACCESS</div>
+            <h2 class="h5 fw-bold mb-0">ระบบงานทั้งหมด</h2>
+        </div>
+    </div>
+    <div class="row g-3 admin-module-grid">
+        <div class="col-sm-6 col-xl-3"><a asp-controller="Manager" asp-action="Products"><i class="fa-solid fa-box-open"></i><span>สินค้าและสต็อก</span></a></div>
+        <div class="col-sm-6 col-xl-3"><a asp-controller="Manager" asp-action="Promotions"><i class="fa-solid fa-tags"></i><span>โปรโมชั่น</span></a></div>
+        <div class="col-sm-6 col-xl-3"><a asp-controller="Manager" asp-action="Reports"><i class="fa-solid fa-chart-line"></i><span>รายงานยอดขาย</span></a></div>
+        <div class="col-sm-6 col-xl-3"><a asp-controller="Staff" asp-action="Dashboard"><i class="fa-solid fa-truck-fast"></i><span>จัดเตรียมคำสั่งซื้อ</span></a></div>
+        <div class="col-sm-6 col-xl-3"><a asp-controller="Staff" asp-action="Inventory"><i class="fa-solid fa-warehouse"></i><span>รับสินค้าเข้าคลัง</span></a></div>
+        <div class="col-sm-6 col-xl-3"><a asp-controller="Accounting" asp-action="Dashboard"><i class="fa-solid fa-calculator"></i><span>บัญชีรายรับรายจ่าย</span></a></div>
+        <div class="col-sm-6 col-xl-3"><a asp-action="Users"><i class="fa-solid fa-user-shield"></i><span>บัญชีและสิทธิ์</span></a></div>
+    </div>
+</section>

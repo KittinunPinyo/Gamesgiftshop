@@ -1,0 +1,165 @@
+@model Gamesgiftshop.Models.AdminUsersViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "จัดการบัญชีและสิทธิ์";
+}
+
+<div class="admin-page-heading">
+    <div class="admin-page-icon"><i class="fa-solid fa-users-gear" aria-hidden="true"></i></div>
+    <div>
+        <div class="admin-eyebrow">IDENTITY & ACCESS</div>
+        <h1>จัดการบัญชีและสิทธิ์</h1>
+        <p>กำหนดบทบาทการเข้าถึงระบบให้ User, Staff, Manager, Accounting และ Admin</p>
+    </div>
+</div>
+
+@if (TempData["AdminUserSuccess"] != null)
+{
+    <div class="alert alert-success">@TempData["AdminUserSuccess"]</div>
+}
+@if (TempData["AdminUserError"] != null)
+{
+    <div class="alert alert-danger">@TempData["AdminUserError"]</div>
+}
+
+<div class="admin-role-notice mb-4">
+    <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+    <div><strong>จัดการบัญชี</strong><span>ผู้ใช้ต้องเข้าสู่ระบบใหม่เมื่อเปลี่ยนสิทธิ์ ระบบป้องกันการลบบัญชี Admin คนสุดท้าย และเก็บบัญชีที่มีประวัติคำสั่งซื้อไว้</span></div>
+</div>
+
+<section class="admin-panel p-4 mb-4">
+    <form method="get" asp-action="Users" class="row g-3 align-items-end">
+        <div class="col-md-6">
+            <label class="form-label" for="search">ค้นหาชื่อผู้ใช้หรืออีเมล</label>
+            <input class="form-control" type="search" id="search" name="search" value="@Model.Search" placeholder="กรอกชื่อหรืออีเมล" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label" for="role">บทบาท</label>
+            <select class="form-select" id="role" name="role">
+                <option value="">ทุกบทบาท</option>
+                <option value="User" selected="@(Model.RoleFilter == "User")">User</option>
+                <option value="Staff" selected="@(Model.RoleFilter == "Staff")">Staff</option>
+                <option value="Manager" selected="@(Model.RoleFilter == "Manager")">Manager</option>
+                <option value="Accountant" selected="@(Model.RoleFilter == "Accountant")">Accounting</option>
+                <option value="Admin" selected="@(Model.RoleFilter == "Admin")">Admin</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-grow-1"><i class="fa-solid fa-magnifying-glass me-1" aria-hidden="true"></i>ค้นหา</button>
+            <a asp-action="Users" class="btn btn-outline-primary">ล้าง</a>
+        </div>
+    </form>
+</section>
+
+<section class="admin-panel p-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h2 class="h5 fw-bold mb-1">บัญชีผู้ใช้</h2>
+            <div class="small text-muted">เปลี่ยนบทบาทจากรายการด้านล่าง</div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="admin-count-badge">@Model.Users.Count.ToString("N0") บัญชี</span>
+            <a asp-action="CreateUser" asp-route-search="@Model.Search" asp-route-roleFilter="@Model.RoleFilter" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-user-plus me-1" aria-hidden="true"></i> เพิ่มบัญชี
+            </a>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 admin-users-table">
+            <thead>
+                <tr>
+                    <th>บัญชี</th>
+                    <th>อีเมล / โทรศัพท์</th>
+                    <th class="text-center">ออเดอร์</th>
+                    <th>สิทธิ์ปัจจุบัน</th>
+                    <th class="text-end">กำหนดสิทธิ์</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Users.Any())
+                {
+                    foreach (var user in Model.Users)
+                    {
+                        var roleClass = user.Role switch
+                        {
+                            "Admin" => "role-admin",
+                            "Manager" => "role-manager",
+                            "Staff" => "role-staff",
+                            "Accountant" => "role-accountant",
+                            _ => "role-user"
+                        };
+                        <tr>
+                            <td>
+                                <span class="admin-user-avatar">@(!string.IsNullOrEmpty(user.Username) ? user.Username.Substring(0, 1).ToUpperInvariant() : "?")</span>
+                                <span class="fw-semibold ms-2">@user.Username</span>
+                                @if (user.Username == Model.CurrentUsername)
+                                {
+                                    <span class="admin-self-label">บัญชีนี้</span>
+                                }
+                            </td>
+                            <td>
+                                <div>@user.Email</div>
+                                <div class="small text-muted">@(string.IsNullOrWhiteSpace(user.Phone) ? "ไม่ระบุเบอร์โทรศัพท์" : user.Phone)</div>
+                            </td>
+                            <td class="text-center">@user.OrderCount.ToString("N0")</td>
+                            <td><span class="admin-role-badge @roleClass">@user.Role</span></td>
+                            <td class="text-end">
+                                @if (user.Username != Model.CurrentUsername)
+                                {
+                                    <form asp-action="UpdateUserRole" method="post" class="admin-role-form">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="userId" value="@user.UserId" />
+                                        <input type="hidden" name="search" value="@Model.Search" />
+                                        <input type="hidden" name="roleFilter" value="@Model.RoleFilter" />
+                                        <select class="form-select form-select-sm" name="newRole" aria-label="สิทธิ์ใหม่สำหรับ @user.Username">
+                                            <option value="User" selected="@(user.Role == "User")">User</option>
+                                            <option value="Staff" selected="@(user.Role == "Staff")">Staff</option>
+                                            <option value="Manager" selected="@(user.Role == "Manager")">Manager</option>
+                                            <option value="Accountant" selected="@(user.Role == "Accountant")">Accounting</option>
+                                            <option value="Admin" selected="@(user.Role == "Admin")">Admin</option>
+                                        </select>
+                                        <button class="btn btn-sm btn-outline-primary" type="submit">บันทึก</button>
+                                    </form>
+                                    <div class="d-flex justify-content-end gap-1 mt-2">
+                                        <a asp-action="EditUser" asp-route-id="@user.UserId" asp-route-search="@Model.Search" asp-route-roleFilter="@Model.RoleFilter"
+                                           class="btn btn-sm btn-outline-secondary" title="แก้ไขบัญชี">
+                                            <i class="fa-solid fa-pen" aria-hidden="true"></i><span class="visually-hidden">แก้ไขบัญชี @user.Username</span>
+                                        </a>
+                                        @if (user.OrderCount == 0)
+                                        {
+                                            <form asp-action="DeleteUser" method="post" class="d-inline"
+                                                  onsubmit="return confirm('ยืนยันลบบัญชี @user.Username หรือไม่?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="userId" value="@user.UserId" />
+                                                <input type="hidden" name="search" value="@Model.Search" />
+                                                <input type="hidden" name="roleFilter" value="@Model.RoleFilter" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="ลบบัญชี">
+                                                    <i class="fa-solid fa-trash" aria-hidden="true"></i><span class="visually-hidden">ลบบัญชี @user.Username</span>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-danger" disabled
+                                                    title="เก็บบัญชีที่มีประวัติคำสั่งซื้อไว้">
+                                                <i class="fa-solid fa-trash" aria-hidden="true"></i><span class="visually-hidden">ลบบัญชีไม่ได้ เพราะมีประวัติคำสั่งซื้อ</span>
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-end small text-muted">ป้องกันการแก้ไขหรือลบบัญชีที่ใช้งานอยู่</div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr><td colspan="5" class="text-center text-muted py-5">ไม่พบบัญชีที่ตรงกับเงื่อนไข</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

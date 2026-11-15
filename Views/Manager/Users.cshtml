@@ -9,10 +9,12 @@
     .user-avatar { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #ede9fe; color: #4a3b8c; font-weight: 700; }
 </style>
 
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+<div class="manager-page-heading">
+    <div class="manager-page-icon"><i class="fa-solid fa-users-gear" aria-hidden="true"></i></div>
     <div>
+        <div class="manager-eyebrow">ACCOUNT CONTROL</div>
         <h1 class="h3 fw-bold mb-1">จัดการบัญชีผู้ใช้</h1>
-        <div class="text-muted">ค้นหาบัญชีและกำหนดสิทธิ์ User, Staff หรือ Manager โดยไม่ลบประวัติคำสั่งซื้อ</div>
+        <p>เพิ่ม แก้ไข และจัดการสิทธิ์บัญชีผู้ใช้ ผู้ใช้ต้องเข้าสู่ระบบใหม่เมื่อเปลี่ยนสิทธิ์ และระบบจะเก็บบัญชีที่มีประวัติคำสั่งซื้อไว้</p>
     </div>
 </div>
 
@@ -23,6 +25,13 @@
 @if (TempData["UserManagementError"] != null)
 {
     <div class="alert alert-danger">@TempData["UserManagementError"]</div>
+}
+@if (Model.CanBootstrapAdmin)
+{
+    <div class="alert alert-info">
+        <i class="fa-solid fa-shield-halved me-1"></i>
+        ยังไม่มี Admin ในระบบ Manager สามารถกำหนด Admin คนแรกได้จากรายการสิทธิ์
+    </div>
 }
 
 <div class="users-card p-4 mb-4">
@@ -37,6 +46,11 @@
                 <option value="">ทั้งหมด</option>
                 <option value="User" selected="@(Model.RoleFilter == "User")">User</option>
                 <option value="Staff" selected="@(Model.RoleFilter == "Staff")">Staff</option>
+                <option value="Accountant" selected="@(Model.RoleFilter == "Accountant")">Accountant</option>
+                @if (Model.CanBootstrapAdmin)
+                {
+                    <option value="Admin" selected="@(Model.RoleFilter == "Admin")">Admin</option>
+                }
                 <option value="Manager" selected="@(Model.RoleFilter == "Manager")">Manager</option>
             </select>
         </div>
@@ -50,7 +64,12 @@
 <div class="users-card p-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="h5 fw-bold mb-0">บัญชีผู้ใช้</h2>
-        <span class="badge text-bg-secondary">@Model.Users.Count รายการ</span>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge text-bg-secondary">@Model.Users.Count รายการ</span>
+            <a asp-action="CreateUser" asp-route-search="@Model.Search" asp-route-roleFilter="@Model.RoleFilter" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-user-plus me-1" aria-hidden="true"></i> เพิ่มบัญชี
+            </a>
+        </div>
     </div>
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
@@ -81,9 +100,9 @@
                             <td>@user.Email</td>
                             <td>@(string.IsNullOrWhiteSpace(user.Phone) ? "—" : user.Phone)</td>
                             <td class="text-center">@user.OrderCount</td>
-                            <td><span class="badge @(user.Role == "Manager" ? "text-bg-primary" : user.Role == "Staff" ? "text-bg-info" : "text-bg-secondary")">@user.Role</span></td>
+                            <td><span class="badge @(user.Role == "Manager" ? "text-bg-primary" : user.Role == "Staff" ? "text-bg-info" : user.Role == "Accountant" ? "text-bg-success" : "text-bg-secondary")">@user.Role</span></td>
                             <td class="text-end">
-                                @if (user.Username != Model.CurrentUsername)
+                                @if (user.Role != "Admin" && (user.Username != Model.CurrentUsername || Model.CanBootstrapAdmin))
                                 {
                                     <form asp-action="UpdateUserRole" method="post" class="d-inline-flex gap-2">
                                         @Html.AntiForgeryToken()
@@ -93,15 +112,53 @@
                                         <select class="form-select form-select-sm" name="newRole" aria-label="สิทธิ์ใหม่สำหรับ @user.Username">
                                             <option value="User" selected="@(user.Role == "User")">User</option>
                                             <option value="Staff" selected="@(user.Role == "Staff")">Staff</option>
+                                            <option value="Accountant" selected="@(user.Role == "Accountant")">Accountant</option>
+                                            @if (Model.CanBootstrapAdmin)
+                                            {
+                                                <option value="Admin" selected="@(user.Role == "Admin")">Admin (ตั้งค่าเริ่มต้น)</option>
+                                            }
                                             <option value="Manager" selected="@(user.Role == "Manager")">Manager</option>
                                         </select>
                                         <button class="btn btn-sm btn-outline-primary" type="submit">บันทึก</button>
                                     </form>
                                 }
-                                else
-                                {
-                                    <span class="small text-muted">ป้องกันการเปลี่ยนสิทธิ์ตัวเอง</span>
-                                }
+                                <div class="d-flex justify-content-end gap-1 mt-2">
+                                    @if (user.Username != Model.CurrentUsername && user.Role != "Admin")
+                                    {
+                                        <a asp-action="EditUser" asp-route-id="@user.UserId" asp-route-search="@Model.Search" asp-route-roleFilter="@Model.RoleFilter"
+                                           class="btn btn-sm btn-outline-secondary" title="แก้ไขบัญชี">
+                                            <i class="fa-solid fa-pen" aria-hidden="true"></i><span class="visually-hidden">แก้ไขบัญชี @user.Username</span>
+                                        </a>
+                                        @if (user.OrderCount == 0)
+                                        {
+                                            <form asp-action="DeleteUser" method="post" class="d-inline"
+                                                  onsubmit="return confirm('ยืนยันลบบัญชี @user.Username หรือไม่?');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="userId" value="@user.UserId" />
+                                                <input type="hidden" name="search" value="@Model.Search" />
+                                                <input type="hidden" name="roleFilter" value="@Model.RoleFilter" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="ลบบัญชี">
+                                                    <i class="fa-solid fa-trash" aria-hidden="true"></i><span class="visually-hidden">ลบบัญชี @user.Username</span>
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-danger" disabled
+                                                    title="เก็บบัญชีที่มีประวัติคำสั่งซื้อไว้">
+                                                <i class="fa-solid fa-trash" aria-hidden="true"></i><span class="visually-hidden">ลบบัญชีไม่ได้ เพราะมีประวัติคำสั่งซื้อ</span>
+                                            </button>
+                                        }
+                                    }
+                                    else if (user.Role == "Admin")
+                                    {
+                                        <span class="small text-muted">จัดการได้จาก Admin Console</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="small text-muted">ป้องกันการแก้ไขหรือลบบัญชีที่ใช้งานอยู่</span>
+                                    }
+                                </div>
                             </td>
                         </tr>
                     }

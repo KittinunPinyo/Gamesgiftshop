@@ -1,0 +1,72 @@
+@model Gamesgiftshop.Models.UserManagementFormViewModel
+@{
+    var isAdmin = User.IsInRole("Admin");
+    Layout = isAdmin ? "_AdminLayout" : "_ManagerLayout";
+    ViewData["Title"] = Model.IsEdit ? "แก้ไขบัญชีผู้ใช้" : "เพิ่มบัญชีผู้ใช้";
+    var formAction = Model.IsEdit ? "EditUser" : "CreateUser";
+}
+
+<div class="@(isAdmin ? "admin-page-heading" : "manager-page-heading")">
+    <div class="@(isAdmin ? "admin-page-icon" : "manager-page-icon")">
+        <i class="fa-solid @(Model.IsEdit ? "fa-user-pen" : "fa-user-plus")" aria-hidden="true"></i>
+    </div>
+    <div>
+        <div class="@(isAdmin ? "admin-eyebrow" : "manager-eyebrow")">ACCOUNT CONTROL</div>
+        <h1 class="@(isAdmin ? "" : "h3 fw-bold mb-1")">@ViewData["Title"]</h1>
+        <p>กำหนดข้อมูลบัญชีและสิทธิ์การเข้าใช้งานระบบ</p>
+    </div>
+</div>
+
+<section class="@(isAdmin ? "admin-panel" : "users-card") p-4">
+    <form asp-action="@formAction" method="post">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+        <input asp-for="UserId" type="hidden" />
+        <input asp-for="Search" type="hidden" />
+        <input asp-for="RoleFilter" type="hidden" />
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label asp-for="Username" class="form-label">ชื่อผู้ใช้</label>
+                <input asp-for="Username" class="form-control" autocomplete="username" maxlength="50" />
+                <span asp-validation-for="Username" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Email" class="form-label">อีเมล</label>
+                <input asp-for="Email" class="form-control" type="email" autocomplete="email" maxlength="100" />
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Phone" class="form-label">เบอร์โทรศัพท์</label>
+                <input asp-for="Phone" class="form-control" autocomplete="tel" maxlength="20" />
+                <span asp-validation-for="Phone" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Role" class="form-label">สิทธิ์</label>
+                <select asp-for="Role" class="form-select">
+                    @foreach (var role in Model.AvailableRoles)
+                    {
+                        <option value="@role">@(role == "Accountant" ? "Accounting" : role)</option>
+                    }
+                </select>
+                <span asp-validation-for="Role" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Password" class="form-label">รหัสผ่าน @(Model.IsEdit ? "(เว้นว่างหากไม่เปลี่ยน)" : "")</label>
+                <input asp-for="Password" class="form-control" type="password" autocomplete="new-password" />
+                <span asp-validation-for="Password" class="text-danger small"></span>
+                @if (!Model.IsEdit)
+                {
+                    <div class="form-text">ต้องมีอย่างน้อย 6 ตัวอักษร</div>
+                }
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-floppy-disk me-1" aria-hidden="true"></i> บันทึก
+            </button>
+            <a asp-action="Users" asp-route-search="@Model.Search" asp-route-role="@Model.RoleFilter" class="btn btn-outline-secondary">ยกเลิก</a>
+        </div>
+    </form>
+</section>

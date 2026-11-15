@@ -28,6 +28,8 @@ public partial class Csi402dbContext : DbContext
 
     public virtual DbSet<UserNotification> UserNotifications { get; set; }
 
+    public virtual DbSet<AccountingExpense> AccountingExpenses { get; set; }
+
     public virtual DbSet<Useraddress> Useraddresses { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -108,6 +110,7 @@ public partial class Csi402dbContext : DbContext
             entity.ToTable("products");
 
             entity.Property(e => e.Category).HasMaxLength(100);
+            entity.Property(e => e.BadgeType).HasMaxLength(20);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("datetime");
@@ -157,6 +160,21 @@ public partial class Csi402dbContext : DbContext
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("usernotifications_ibfk_1");
+        });
+
+        modelBuilder.Entity<AccountingExpense>(entity =>
+        {
+            entity.HasKey(e => e.AccountingExpenseId).HasName("PRIMARY");
+            entity.ToTable("accountingexpenses");
+            entity.Property(e => e.Description).HasMaxLength(200);
+            entity.Property(e => e.Category).HasMaxLength(80);
+            entity.Property(e => e.Amount).HasPrecision(10, 2);
+            entity.Property(e => e.ExpenseDate).HasColumnType("date");
+            entity.Property(e => e.CreatedBy).HasMaxLength(50);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("datetime");
+            entity.HasIndex(e => e.ExpenseDate);
         });
 
         modelBuilder.Entity<Useraddress>(entity =>

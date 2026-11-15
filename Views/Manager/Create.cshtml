@@ -18,7 +18,7 @@
         <h3 class="fw-bold mb-4 text-center" style="color: #4a3b8c;"><i class="fa-solid fa-plus-circle"></i> เพิ่มสินค้าใหม่</h3>
 
         <form method="post" asp-controller="Manager" asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
 
             <div class="mb-3">
                 <label asp-for="Name" class="form-label fw-bold">ชื่อสินค้า</label>
@@ -53,6 +53,18 @@
                     <label asp-for="OriginalPrice" class="form-label fw-bold">ราคาเต็ม (ถ้ามี)</label>
                     <input asp-for="OriginalPrice" type="number" step="0.01" class="form-control" />
                 </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="BadgeType" class="form-label fw-bold">ป้ายแสดงบนสินค้า</label>
+                <select asp-for="BadgeType" class="form-select">
+                    <option value="">ไม่แสดงป้าย</option>
+                    <option value="BestSeller">ขายดี</option>
+                    <option value="New">ใหม่</option>
+                    <option value="Hot">ฮิต</option>
+                    <option value="Discount">ลดราคา (ต้องกำหนดราคาเต็ม)</option>
+                </select>
+                <span asp-validation-for="BadgeType" class="text-danger small"></span>
             </div>
 
             <!-- ⭐️ เพิ่มช่องกรอก: รายละเอียดสินค้า ⭐️ -->

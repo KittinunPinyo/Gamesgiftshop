@@ -91,6 +91,15 @@
             <a href="/Manager/Create" class="btn-add">+ เพิ่มสินค้าใหม่</a>
         </div>
 
+        @if (TempData["ProductBadgeSuccess"] != null)
+        {
+            <div class="alert alert-success">@TempData["ProductBadgeSuccess"]</div>
+        }
+        @if (TempData["ProductBadgeError"] != null)
+        {
+            <div class="alert alert-danger">@TempData["ProductBadgeError"]</div>
+        }
+
         @if (Model != null && Model.Any())
         {
             <div class="table-responsive">
@@ -102,6 +111,7 @@
                             <th>หมวดหมู่</th>
                             <th>ราคาขาย</th>
                             <th>สต๊อก</th>
+                            <th>ป้ายสินค้า</th>
                             <th>จัดการ</th>
                         </tr>
                     </thead>
@@ -125,6 +135,24 @@
                                         class="status-badge @(item.StockQuantity > 0 ? "bg-success text-white" : "bg-warning text-dark")">
                                         @item.StockQuantity
                                     </span>
+                                </td>
+                                <td>
+                                    <form asp-action="UpdateProductBadge" method="post" class="d-flex align-items-center gap-2">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.ProductId" />
+                                        <select name="badgeType" class="form-select form-select-sm" aria-label="ป้ายสินค้าสำหรับ @item.Name">
+                                            <option value="" selected="@(string.IsNullOrEmpty(item.BadgeType))">ไม่แสดง</option>
+                                            <option value="BestSeller" selected="@(item.BadgeType == "BestSeller")">ขายดี</option>
+                                            <option value="New" selected="@(item.BadgeType == "New")">ใหม่</option>
+                                            <option value="Hot" selected="@(item.BadgeType == "Hot")">ฮิต</option>
+                                            <option value="Discount" selected="@(item.BadgeType == "Discount")">ลดราคา</option>
+                                        </select>
+                                        <button class="btn btn-sm btn-outline-primary" type="submit">บันทึก</button>
+                                    </form>
+                                    @if (item.BadgeType == "Discount" && (!item.OriginalPrice.HasValue || item.OriginalPrice <= item.Price))
+                                    {
+                                        <small class="text-danger">กรุณาตั้งราคาเต็มให้สูงกว่าราคาขาย</small>
+                                    }
                                 </td>
                                 <td>
                                     <div class="d-flex justify-content-center gap-2">

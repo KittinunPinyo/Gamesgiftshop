@@ -19,6 +19,8 @@ public partial class Product
 
     public bool? IsTrending { get; set; }
 
+    public string? BadgeType { get; set; }
+
     public decimal? Rating { get; set; }
 
     public int? ReviewCount { get; set; }

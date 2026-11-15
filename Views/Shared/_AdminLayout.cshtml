@@ -1,0 +1,47 @@
+@{
+    var currentAction = ViewContext.RouteData.Values["Action"]?.ToString() ?? string.Empty;
+}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Admin Console</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="~/css/admin-theme.css" asp-append-version="true" />
+</head>
+<body class="admin-theme">
+    <nav class="admin-sidebar">
+        <div class="admin-brand">
+            <span class="admin-brand-icon"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></span>
+            <span><strong>Admin Console</strong><small>GAMES GIFT SHOP</small></span>
+        </div>
+        <div class="admin-nav-label">ภาพรวมระบบ</div>
+        <ul class="admin-menu">
+            <li><a asp-controller="Admin" asp-action="Dashboard" class="@(currentAction == "Dashboard" ? "active" : "")"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i><span>แดชบอร์ด</span></a></li>
+            <li><a asp-controller="Admin" asp-action="Users" class="@(currentAction == "Users" ? "active" : "")"><i class="fa-solid fa-users-gear" aria-hidden="true"></i><span>บัญชีและสิทธิ์</span></a></li>
+        </ul>
+        <div class="admin-nav-label">จัดการระบบ</div>
+        <ul class="admin-menu admin-module-menu">
+            <li><a asp-controller="Manager" asp-action="Dashboard"><i class="fa-solid fa-receipt" aria-hidden="true"></i><span>คำสั่งซื้อ</span></a></li>
+            <li><a asp-controller="Manager" asp-action="Products"><i class="fa-solid fa-box-open" aria-hidden="true"></i><span>สินค้าและสต็อก</span></a></li>
+            <li><a asp-controller="Manager" asp-action="Promotions"><i class="fa-solid fa-tags" aria-hidden="true"></i><span>โปรโมชั่น</span></a></li>
+            <li><a asp-controller="Manager" asp-action="Reports"><i class="fa-solid fa-chart-line" aria-hidden="true"></i><span>รายงานยอดขาย</span></a></li>
+            <li><a asp-controller="Staff" asp-action="Dashboard"><i class="fa-solid fa-truck-fast" aria-hidden="true"></i><span>งานจัดส่ง</span></a></li>
+            <li><a asp-controller="Staff" asp-action="Inventory"><i class="fa-solid fa-warehouse" aria-hidden="true"></i><span>คลังสินค้า</span></a></li>
+            <li><a asp-controller="Accounting" asp-action="Dashboard"><i class="fa-solid fa-calculator" aria-hidden="true"></i><span>บัญชี</span></a></li>
+        </ul>
+        <div class="admin-sidebar-footer">
+            <div class="admin-access-label"><i class="fa-solid fa-lock me-2" aria-hidden="true"></i>สิทธิ์ผู้ดูแลระบบ</div>
+            <a asp-controller="Account" asp-action="Logout"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i><span>ออกจากระบบ</span></a>
+        </div>
+    </nav>
+    <main class="admin-content">
+        @RenderBody()
+    </main>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

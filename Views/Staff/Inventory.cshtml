@@ -2,11 +2,48 @@
 @{
     Layout = "_StaffLayout";
     ViewData["Title"] = "รับสินค้าเข้าคลัง";
+    var products = Model?.ToList() ?? new List<Gamesgiftshop.Models.Product>();
+    var outOfStockCount = products.Count(product => (product.StockQuantity ?? 0) <= 0);
+    var stockUnits = products.Sum(product => (long)Math.Max(0, product.StockQuantity ?? 0));
 }
 
-<div class="mb-4">
-    <h1 class="h3 fw-bold mb-1">รับสินค้าเข้าคลัง</h1>
-    <div class="text-muted">บันทึกจำนวนสินค้าที่รับเข้าเพื่อเพิ่มสต็อก</div>
+<div class="staff-page-heading">
+    <div class="staff-page-icon"><i class="fa-solid fa-warehouse" aria-hidden="true"></i></div>
+    <div>
+        <div class="staff-eyebrow">INVENTORY CONTROL</div>
+        <h1>รับสินค้าเข้าคลัง</h1>
+        <p>ค้นหาสินค้าและบันทึกจำนวนที่รับเข้าเพื่ออัปเดตสต็อก</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-4">
+        <div class="staff-stat-card">
+            <div class="staff-stat-icon"><i class="fa-solid fa-cubes-stacked" aria-hidden="true"></i></div>
+            <div>
+                <div class="staff-stat-label">สินค้าที่แสดง</div>
+                <div class="staff-stat-value">@products.Count.ToString("N0")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-4">
+        <div class="staff-stat-card">
+            <div class="staff-stat-icon"><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i></div>
+            <div>
+                <div class="staff-stat-label">จำนวนคงเหลือรวม</div>
+                <div class="staff-stat-value">@stockUnits.ToString("N0") ชิ้น</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-4">
+        <div class="staff-stat-card">
+            <div class="staff-stat-icon"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i></div>
+            <div>
+                <div class="staff-stat-label">สินค้าหมดสต็อก</div>
+                <div class="staff-stat-value">@outOfStockCount.ToString("N0")</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @if (TempData["InventoryError"] != null)
@@ -18,7 +55,7 @@
     <div class="alert alert-success">@TempData["InventorySuccess"]</div>
 }
 
-<section class="card border-0 shadow-sm rounded-4 mb-4">
+<section class="staff-filter-card card mb-4">
     <div class="card-body p-4">
         <form asp-action="Inventory" method="get" class="row g-2">
             <div class="col-sm">
@@ -30,7 +67,7 @@
     </div>
 </section>
 
-<section class="card border-0 shadow-sm rounded-4">
+<section class="staff-inventory-card card">
     <div class="table-responsive">
         <table class="table align-middle mb-0">
             <thead class="table-light">
@@ -41,7 +78,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var product in Model)
+                @foreach (var product in products)
                 {
                     <tr>
                         <td class="ps-4">
@@ -60,7 +97,7 @@
                         </td>
                     </tr>
                 }
-                @if (!Model.Any())
+                @if (!products.Any())
                 {
                     <tr><td colspan="3" class="text-center text-muted py-5">ไม่พบสินค้า</td></tr>
                 }

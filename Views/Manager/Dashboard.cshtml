@@ -3,6 +3,9 @@
     Layout = "_ManagerLayout";
     ViewData["Title"] = "จัดการบิลคำสั่งซื้อ";
     var users = ViewBag.Users as List<Gamesgiftshop.Models.User>;
+    var orders = Model?.ToList() ?? new List<Gamesgiftshop.Models.Order>();
+    var ordersAwaitingReview = orders.Count(order => order.Status == "รอตรวจสอบสลิป");
+    var orderValue = orders.Sum(order => order.TotalAmount);
 }
 
 <style>
@@ -15,10 +18,49 @@
 </style>
 
 <div class="container-fluid mt-2">
+    <div class="manager-page-heading">
+        <div class="manager-page-icon"><i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i></div>
+        <div>
+            <div class="manager-eyebrow">ORDER MANAGEMENT</div>
+            <h1>จัดการบิลคำสั่งซื้อ</h1>
+            <p>ตรวจสอบรายการสั่งซื้อ สลิปชำระเงิน และอัปเดตสถานะได้จากหน้านี้</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-4">
+            <div class="manager-stat-card">
+                <div class="manager-stat-icon"><i class="fa-solid fa-receipt" aria-hidden="true"></i></div>
+                <div>
+                    <div class="manager-stat-label">คำสั่งซื้อทั้งหมด</div>
+                    <div class="manager-stat-value">@orders.Count.ToString("N0")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <div class="manager-stat-card">
+                <div class="manager-stat-icon"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i></div>
+                <div>
+                    <div class="manager-stat-label">รอตรวจสอบสลิป</div>
+                    <div class="manager-stat-value">@ordersAwaitingReview.ToString("N0")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <div class="manager-stat-card">
+                <div class="manager-stat-icon"><i class="fa-solid fa-wallet" aria-hidden="true"></i></div>
+                <div>
+                    <div class="manager-stat-label">ยอดคำสั่งซื้อรวม</div>
+                    <div class="manager-stat-value">฿@orderValue.ToString("N0")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="card-panel">
-        <h3 class="mb-4" style="color: #4a3b8c; font-weight: bold;"><i class="fa-solid fa-file-invoice"></i> จัดการบิลคำสั่งซื้อ</h3>
+        <h3 class="mb-4"><i class="fa-solid fa-list-check me-2"></i>รายการคำสั่งซื้อ</h3>
         
-        @if (Model != null && Model.Any())
+        @if (orders.Any())
         {
             <div class="table-responsive">
                 <table class="table-admin">
@@ -34,7 +76,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach (var order in Model)
+                        @foreach (var order in orders)
                         {
                             var customerName = users?.FirstOrDefault(u => u.UserId == order.UserId)?.Username ?? "ไม่ทราบ";
                             <tr>
@@ -68,7 +110,11 @@
         }
         else
         {
-            <div class="text-center py-5 text-muted">ยังไม่มีคำสั่งซื้อเข้ามาในระบบ</div>
+            <div class="text-center py-5">
+                <div class="manager-stat-icon mx-auto mb-3"><i class="fa-solid fa-inbox" aria-hidden="true"></i></div>
+                <div class="fw-bold">ยังไม่มีคำสั่งซื้อเข้ามาในระบบ</div>
+                <div class="text-muted small mt-1">รายการใหม่จะแสดงที่นี่เมื่อมีการสั่งซื้อ</div>
+            </div>
         }
     </div>
 </div>

@@ -1,11 +1,16 @@
+@{
+    var currentAction = ViewContext.RouteData.Values["Action"]?.ToString() ?? string.Empty;
+}
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Manager Panel</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="~/css/manager-theme.css" asp-append-version="true" />
     
     <style>
         body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, sans-serif; overflow-x: hidden; }
@@ -38,35 +43,43 @@
         .main-content { margin-left: 260px; padding: 30px; min-height: 100vh; background-color: #f8f9fa; }
     </style>
 </head>
-<body>
+<body class="manager-theme">
     <!-- Sidebar Menu -->
     <nav class="sidebar">
         <div class="sidebar-header">
             <i class="fa-solid fa-gamepad"></i> Manager Panel
         </div>
         <ul class="sidebar-menu">
+            @if (User.IsInRole("Admin"))
+            {
+                <li>
+                    <a href="/Admin/Dashboard">
+                        <i class="fa-solid fa-shield-halved"></i> <span>Admin Console</span>
+                    </a>
+                </li>
+            }
             <li>
-                <a href="/Manager/Dashboard" class="@(ViewContext.RouteData.Values["Action"].ToString() == "Dashboard" ? "active" : "")">
+                <a href="/Manager/Dashboard" class="@(currentAction == "Dashboard" ? "active" : "")">
                     <i class="fa-solid fa-file-invoice"></i> <span>จัดการบิลคำสั่งซื้อ</span>
                 </a>
             </li>
             <li>
-                <a href="/Manager/Products" class="@(ViewContext.RouteData.Values["Action"].ToString() == "Products" || ViewContext.RouteData.Values["Action"].ToString() == "Create" ? "active" : "")">
+                <a href="/Manager/Products" class="@(currentAction == "Products" || currentAction == "Create" || currentAction == "Edit" ? "active" : "")">
                     <i class="fa-solid fa-box-open"></i> <span>จัดการแคตตาล็อกสินค้า</span>
                 </a>
             </li>
             <li>
-                <a href="/Manager/Promotions" class="@(ViewContext.RouteData.Values["Action"].ToString() == "Promotions" ? "active" : "")">
+                <a href="/Manager/Promotions" class="@(currentAction == "Promotions" ? "active" : "")">
                     <i class="fa-solid fa-tags"></i> <span>โปรโมชั่น & Flash Sale</span>
                 </a>
             </li>
             <li>
-                <a href="/Manager/Reports" class="@(ViewContext.RouteData.Values["Action"].ToString() == "Reports" ? "active" : "")">
+                <a href="/Manager/Reports" class="@(currentAction == "Reports" ? "active" : "")">
                     <i class="fa-solid fa-chart-pie"></i> <span>รายงานยอดขาย</span>
                 </a>
             </li>
             <li>
-                <a href="/Manager/Users" class="@(ViewContext.RouteData.Values["Action"].ToString() == "Users" ? "active" : "")">
+                <a href="/Manager/Users" class="@(currentAction == "Users" ? "active" : "")">
                     <i class="fa-solid fa-users-slash"></i> <span>จัดการบัญชีลูกค้า</span>
                 </a>
             </li>

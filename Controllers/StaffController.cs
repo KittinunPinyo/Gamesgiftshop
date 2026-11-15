@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Gamesgiftshop.Controllers;
 
-[Authorize(Roles = "Staff")]
+[Authorize(Roles = "Staff,Admin")]
 public class StaffController : Controller
 {
     private readonly Csi402dbContext _db;
