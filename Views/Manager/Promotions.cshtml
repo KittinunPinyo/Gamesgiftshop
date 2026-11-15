@@ -1,0 +1,194 @@
+@model IEnumerable<Gamesgiftshop.Models.Promotion>
+@{
+    Layout = "_ManagerLayout";
+    ViewData["Title"] = "โปรโมชั่น";
+    var categories = ViewBag.Categories as List<string> ?? new List<string>();
+}
+
+<style>
+    .promotion-card { background: #fff; border: 0; border-radius: 14px; box-shadow: 0 4px 18px rgba(30, 41, 59, .07); }
+    .promotion-card h2 { font-size: 1.2rem; font-weight: 700; }
+    .promotion-type-fields { display: none; }
+    .promotion-table th { white-space: nowrap; }
+</style>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">โปรโมชั่น & Flash Sale</h1>
+        <div class="text-muted">สร้างโค้ดส่วนลด กำหนดส่วนลดตามยอดซื้อ และตั้งเวลา Flash Sale</div>
+    </div>
+</div>
+
+@if (TempData["PromotionSuccess"] != null)
+{
+    <div class="alert alert-success">@TempData["PromotionSuccess"]</div>
+}
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">
+        @ViewBag.Error
+        <div asp-validation-summary="All" class="mt-2"></div>
+    </div>
+}
+
+<div class="promotion-card p-4 mb-4">
+    <h2 class="mb-3">สร้างโปรโมชั่น</h2>
+    <form asp-action="CreatePromotion" method="post">
+        @Html.AntiForgeryToken()
+        <div class="row g-3">
+            <div class="col-md-5">
+                <label class="form-label" for="Name">ชื่อโปรโมชั่น</label>
+                <input class="form-control" id="Name" name="Name" maxlength="120" required placeholder="เช่น ลดรับสมาชิกใหม่" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="Type">ประเภท</label>
+                <select class="form-select" id="Type" name="Type" required>
+                    <option value="Coupon">โค้ดส่วนลด</option>
+                    <option value="Tier">ส่วนลดตามขั้นบันได</option>
+                    <option value="FlashSale">Flash Sale</option>
+                    <option value="BuyXGetY">ซื้อ X แถม Y</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button class="btn btn-primary w-100" type="submit"><i class="fa-solid fa-plus me-1"></i> สร้างโปรโมชั่น</button>
+            </div>
+
+            <div class="col-md-4 promotion-type-fields" data-types="Coupon">
+                <label class="form-label" for="Code">โค้ดส่วนลด</label>
+                <div class="input-group">
+                    <input class="form-control" id="Code" name="Code" maxlength="40" placeholder="เช่น WELCOME150" />
+                    <button class="btn btn-outline-secondary" type="button" id="generateCode">สุ่มโค้ด</button>
+                </div>
+            </div>
+            <div class="col-md-4 promotion-type-fields" data-types="Coupon,Tier,FlashSale">
+                <label class="form-label" for="DiscountPercent">ส่วนลด (%)</label>
+                <input class="form-control" id="DiscountPercent" name="DiscountPercent" type="number" min="0.01" max="100" step="0.01" />
+            </div>
+            <div class="col-md-4 promotion-type-fields" data-types="Coupon">
+                <label class="form-label" for="DiscountAmount">หรือส่วนลดเป็นจำนวนเงิน (บาท)</label>
+                <input class="form-control" id="DiscountAmount" name="DiscountAmount" type="number" min="0.01" step="0.01" />
+            </div>
+            <div class="col-md-4 promotion-type-fields" data-types="Tier,Coupon">
+                <label class="form-label" for="MinimumOrderAmount">ยอดซื้อขั้นต่ำ (บาท)</label>
+                <input class="form-control" id="MinimumOrderAmount" name="MinimumOrderAmount" type="number" min="0" step="0.01" />
+            </div>
+            <div class="col-md-4 promotion-type-fields" data-types="Coupon">
+                <div class="form-check mt-4">
+                    <input class="form-check-input" id="FirstOrderOnly" name="FirstOrderOnly" type="checkbox" value="true" />
+                    <label class="form-check-label" for="FirstOrderOnly">ใช้ได้เฉพาะการสั่งซื้อครั้งแรก</label>
+                </div>
+            </div>
+            <div class="col-md-4 promotion-type-fields" data-types="FlashSale,BuyXGetY">
+                <label class="form-label" for="Category">หมวดหมู่สินค้า</label>
+                <select class="form-select" id="Category" name="Category">
+                    <option value="">ทุกหมวดหมู่</option>
+                    @foreach (var category in categories)
+                    {
+                        <option value="@category">@category</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3 promotion-type-fields" data-types="BuyXGetY">
+                <label class="form-label" for="BuyQuantity">ซื้อ (ชิ้น)</label>
+                <input class="form-control" id="BuyQuantity" name="BuyQuantity" type="number" min="1" step="1" />
+            </div>
+            <div class="col-md-3 promotion-type-fields" data-types="BuyXGetY">
+                <label class="form-label" for="FreeQuantity">แถม (ชิ้น)</label>
+                <input class="form-control" id="FreeQuantity" name="FreeQuantity" type="number" min="1" step="1" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="StartsAt">เริ่มใช้</label>
+                <input class="form-control" id="StartsAt" name="StartsAt" type="datetime-local" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="EndsAt">สิ้นสุด</label>
+                <input class="form-control" id="EndsAt" name="EndsAt" type="datetime-local" />
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="promotion-card p-4">
+    <h2 class="mb-3">รายการโปรโมชั่น</h2>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle promotion-table mb-0">
+            <thead>
+                <tr>
+                    <th>ชื่อ</th>
+                    <th>รูปแบบ / เงื่อนไข</th>
+                    <th>ระยะเวลา</th>
+                    <th>สถานะ</th>
+                    <th class="text-end">จัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Any())
+                {
+                    foreach (var promotion in Model)
+                    {
+                        var typeLabel = promotion.Type switch
+                        {
+                            "Coupon" => "โค้ด " + promotion.Code,
+                            "Tier" => $"ซื้อครบ ฿{promotion.MinimumOrderAmount:N0} ลด {promotion.DiscountPercent:N0}%",
+                            "FlashSale" => $"ลด {promotion.DiscountPercent:N0}%{(string.IsNullOrEmpty(promotion.Category) ? " ทุกหมวดหมู่" : " • " + promotion.Category)}",
+                            "BuyXGetY" => $"ซื้อ {promotion.BuyQuantity} แถม {promotion.FreeQuantity} • {promotion.Category}",
+                            _ => promotion.Type
+                        };
+                        <tr>
+                            <td class="fw-semibold">@promotion.Name</td>
+                            <td>@typeLabel</td>
+                            <td>
+                                @(promotion.StartsAt?.ToString("dd/MM/yy HH:mm") ?? "ทันที")
+                                <span class="text-muted">–</span>
+                                @(promotion.EndsAt?.ToString("dd/MM/yy HH:mm") ?? "ไม่กำหนด")
+                            </td>
+                            <td>
+                                <span class="badge @(promotion.IsActive ? "text-bg-success" : "text-bg-secondary")">
+                                    @(promotion.IsActive ? "เปิดใช้งาน" : "ปิดใช้งาน")
+                                </span>
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <form asp-action="TogglePromotion" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@promotion.PromotionId" />
+                                    <button class="btn btn-sm btn-outline-primary" type="submit">
+                                        @(promotion.IsActive ? "ปิด" : "เปิด")
+                                    </button>
+                                </form>
+                                <form asp-action="DeletePromotion" method="post" class="d-inline" onsubmit="return confirm('ลบโปรโมชั่นนี้หรือไม่?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@promotion.PromotionId" />
+                                    <button class="btn btn-sm btn-outline-danger" type="submit">ลบ</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr><td colspan="5" class="text-center text-muted py-4">ยังไม่มีโปรโมชั่น</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const typeSelect = document.getElementById('Type');
+        const fields = document.querySelectorAll('.promotion-type-fields');
+
+        function updatePromotionFields() {
+            fields.forEach(field => {
+                field.style.display = field.dataset.types.split(',').includes(typeSelect.value) ? 'block' : 'none';
+            });
+        }
+
+        typeSelect.addEventListener('change', updatePromotionFields);
+        updatePromotionFields();
+
+        document.getElementById('generateCode').addEventListener('click', () => {
+            document.getElementById('Code').value = 'GAME' + Math.random().toString(36).slice(2, 8).toUpperCase();
+        });
+    </script>
+}

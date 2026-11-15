@@ -20,9 +20,13 @@ public partial class Csi402dbContext : DbContext
 
     public virtual DbSet<Orderdetail> Orderdetails { get; set; }
 
+    public virtual DbSet<Promotion> Promotions { get; set; }
+
     public virtual DbSet<Product> Products { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
+
+    public virtual DbSet<UserNotification> UserNotifications { get; set; }
 
     public virtual DbSet<Useraddress> Useraddresses { get; set; }
 
@@ -51,6 +55,28 @@ public partial class Csi402dbContext : DbContext
                 .HasMaxLength(50)
                 .HasDefaultValueSql("'Pending'");
             entity.Property(e => e.TotalAmount).HasPrecision(10, 2);
+            entity.Property(e => e.LoyaltyPointsRedeemed).HasDefaultValue(0);
+            entity.Property(e => e.AppliedPromoCode).HasMaxLength(40);
+            entity.Property(e => e.TrackingNumber).HasMaxLength(100);
+            entity.HasIndex(e => new { e.UserId, e.AppliedPromoCode });
+        });
+
+        modelBuilder.Entity<Promotion>(entity =>
+        {
+            entity.HasKey(e => e.PromotionId).HasName("PRIMARY");
+            entity.ToTable("promotions");
+            entity.HasIndex(e => e.Code).IsUnique();
+            entity.Property(e => e.Name).HasMaxLength(120);
+            entity.Property(e => e.Type).HasMaxLength(20);
+            entity.Property(e => e.Code).HasMaxLength(40);
+            entity.Property(e => e.Category).HasMaxLength(100);
+            entity.Property(e => e.MinimumOrderAmount).HasPrecision(10, 2);
+            entity.Property(e => e.DiscountPercent).HasPrecision(5, 2);
+            entity.Property(e => e.DiscountAmount).HasPrecision(10, 2);
+            entity.Property(e => e.StartsAt).HasColumnType("datetime");
+            entity.Property(e => e.EndsAt).HasColumnType("datetime");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.FirstOrderOnly).HasDefaultValue(false);
         });
 
         modelBuilder.Entity<Orderdetail>(entity =>
@@ -113,6 +139,24 @@ public partial class Csi402dbContext : DbContext
                 .HasMaxLength(20)
                 .HasDefaultValueSql("'User'");
             entity.Property(e => e.Username).HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<UserNotification>(entity =>
+        {
+            entity.HasKey(e => e.UserNotificationId).HasName("PRIMARY");
+            entity.ToTable("usernotifications");
+            entity.Property(e => e.UserId).HasColumnName("UserID");
+            entity.Property(e => e.Title).HasMaxLength(120);
+            entity.Property(e => e.Message).HasMaxLength(500);
+            entity.Property(e => e.IsRead).HasDefaultValue(false);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("datetime");
+            entity.HasIndex(e => new { e.UserId, e.IsRead, e.CreatedAt });
+            entity.HasOne(e => e.User).WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("usernotifications_ibfk_1");
         });
 
         modelBuilder.Entity<Useraddress>(entity =>

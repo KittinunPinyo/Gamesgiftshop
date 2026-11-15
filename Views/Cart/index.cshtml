@@ -164,6 +164,16 @@
                     <span>ส่วนลด (Discount)</span>
                     <span class="summary-val val-discount">- ฿@(Model?.Discount.ToString("N0") ?? "0")</span>
                 </div>
+                @if (Model != null && Model.Discount > 0)
+                {
+                    <div class="small text-success mb-3">
+                        @if (Model.FlashSaleDiscount > 0) { <div>Flash Sale: -฿@Model.FlashSaleDiscount.ToString("N0")</div> }
+                        @if (Model.BuyXGetYDiscount > 0) { <div>ซื้อ X แถม Y: -฿@Model.BuyXGetYDiscount.ToString("N0")</div> }
+                        @if (Model.TierDiscount > 0) { <div>ส่วนลดตามยอดซื้อ: -฿@Model.TierDiscount.ToString("N0")</div> }
+                        @if (Model.CouponDiscount > 0) { <div>โค้ด @Model.PromoCode: -฿@Model.CouponDiscount.ToString("N0")</div> }
+                        @if (Model.LoyaltyDiscount > 0) { <div>ใช้ @Model.LoyaltyPointsRedeemed แต้ม: -฿@Model.LoyaltyDiscount.ToString("N0")</div> }
+                    </div>
+                }
                 
                 <div class="summary-row">
                     <span>ค่าจัดส่ง (Shipping)</span>
@@ -182,9 +192,32 @@
 
                 <!-- ฟอร์มโค้ดส่วนลด -->
                 <form action="/Cart/ApplyPromo" method="post" class="promo-box">
+                    @Html.AntiForgeryToken()
                     <input type="text" name="promoCode" class="promo-input" placeholder="กรอกโค้ดส่วนลด..." disabled="@isCartEmpty">
                     <button type="submit" class="btn-promo" disabled="@isCartEmpty">ใช้</button>
                 </form>
+                @if (ViewBag.PromoMessage != null)
+                {
+                    <div class="small mt-2 text-light">@ViewBag.PromoMessage</div>
+                }
+                @if (Model != null && Model.LoyaltyPointsAvailable >= 500)
+                {
+                    <form action="/Cart/ApplyLoyalty" method="post" class="mt-3">
+                        @Html.AntiForgeryToken()
+                        <div class="d-flex justify-content-between align-items-center gap-2">
+                            <span class="small text-light">
+                                Loyalty Points: @Model.LoyaltyPointsAvailable แต้ม
+                                @if (Model.LoyaltyPointsRedeemed > 0)
+                                {
+                                    <span class="text-success">(ใช้ @Model.LoyaltyPointsRedeemed แต้ม ลด @Model.LoyaltyDiscount.ToString("N0") บาท)</span>
+                                }
+                            </span>
+                            <button type="submit" name="redeem" value="@(Model.LoyaltyPointsRedeemed == 0 ? "true" : "false")" class="btn btn-sm btn-outline-light">
+                                @(Model.LoyaltyPointsRedeemed == 0 ? "แลกส่วนลด 5%" : "ยกเลิกการแลกแต้ม")
+                            </button>
+                        </div>
+                    </form>
+                }
 
                 <!-- ปุ่มชำระเงิน -->
                 <form action="/Cart/Checkout" method="get">

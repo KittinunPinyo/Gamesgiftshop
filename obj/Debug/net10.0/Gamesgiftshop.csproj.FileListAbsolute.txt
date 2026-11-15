@@ -2,7 +2,6 @@ D:\CSI 402\Gamesgiftshop\bin\Debug\net10.0\appsettings.Development.json
 D:\CSI 402\Gamesgiftshop\bin\Debug\net10.0\appsettings.json
 D:\CSI 402\Gamesgiftshop\bin\Debug\net10.0\Gamesgiftshop.staticwebassets.runtime.json
 D:\CSI 402\Gamesgiftshop\bin\Debug\net10.0\Gamesgiftshop.staticwebassets.endpoints.json
-D:\CSI 402\Gamesgiftshop\bin\Debug\net10.0\Gamesgiftshop.exe
 D:\CSI 402\Gamesgiftshop\bin\Debug\net10.0\Gamesgiftshop.deps.json
 D:\CSI 402\Gamesgiftshop\bin\Debug\net10.0\Gamesgiftshop.runtimeconfig.json
 D:\CSI 402\Gamesgiftshop\bin\Debug\net10.0\Gamesgiftshop.dll
@@ -186,3 +185,197 @@ D:\CSI 402\Gamesgiftshop\obj\Debug\net10.0\Gamesgiftshop.genruntimeconfig.cache
 D:\CSI 402\Gamesgiftshop\obj\Debug\net10.0\ref\Gamesgiftshop.dll
 D:\CSI 402\Gamesgiftshop\obj\Debug\net10.0\compressed\g1q9mcx8ra-{0}-b9sayid5wm-b9sayid5wm.gz
 D:\CSI 402\Gamesgiftshop\obj\Debug\net10.0\Gamesgiftshop.sourcelink.json
+D:\CSI 402\Gamesgiftshop\obj\verify-build\appsettings.Development.json
+D:\CSI 402\Gamesgiftshop\obj\verify-build\appsettings.json
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Gamesgiftshop.staticwebassets.runtime.json
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Gamesgiftshop.staticwebassets.endpoints.json
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Gamesgiftshop.deps.json
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Gamesgiftshop.runtimeconfig.json
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Gamesgiftshop.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Gamesgiftshop.pdb
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Humanizer.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Microsoft.Bcl.AsyncInterfaces.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Microsoft.Build.Locator.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Microsoft.CodeAnalysis.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Microsoft.CodeAnalysis.CSharp.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Microsoft.CodeAnalysis.CSharp.Workspaces.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Microsoft.CodeAnalysis.Workspaces.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Microsoft.CodeAnalysis.Workspaces.MSBuild.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Microsoft.EntityFrameworkCore.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Microsoft.EntityFrameworkCore.Abstractions.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Microsoft.EntityFrameworkCore.Design.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Microsoft.EntityFrameworkCore.Relational.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Microsoft.Extensions.DependencyModel.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Mono.TextTemplating.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\MySqlConnector.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\Pomelo.EntityFrameworkCore.MySql.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\System.CodeDom.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\System.Composition.AttributedModel.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\System.Composition.Convention.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\System.Composition.Hosting.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\System.Composition.Runtime.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\System.Composition.TypedParts.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\cs\Microsoft.CodeAnalysis.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\de\Microsoft.CodeAnalysis.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\es\Microsoft.CodeAnalysis.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\fr\Microsoft.CodeAnalysis.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\it\Microsoft.CodeAnalysis.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\ja\Microsoft.CodeAnalysis.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\ko\Microsoft.CodeAnalysis.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\pl\Microsoft.CodeAnalysis.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\pt-BR\Microsoft.CodeAnalysis.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\ru\Microsoft.CodeAnalysis.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\tr\Microsoft.CodeAnalysis.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\zh-Hans\Microsoft.CodeAnalysis.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\zh-Hant\Microsoft.CodeAnalysis.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\cs\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\de\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\es\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\fr\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\it\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\ja\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\ko\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\pl\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\pt-BR\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\ru\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\tr\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\zh-Hans\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\zh-Hant\Microsoft.CodeAnalysis.CSharp.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\cs\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\de\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\es\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\fr\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\it\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\ja\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\ko\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\pl\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\pt-BR\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\ru\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\tr\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\zh-Hans\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\zh-Hant\Microsoft.CodeAnalysis.CSharp.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\cs\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\de\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\es\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\fr\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\it\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\ja\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\ko\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\pl\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\pt-BR\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\ru\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\tr\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\zh-Hans\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\zh-Hant\Microsoft.CodeAnalysis.Workspaces.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\cs\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\de\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\es\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\fr\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\it\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\ja\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\ko\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\pl\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\pt-BR\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\ru\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\tr\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\zh-Hans\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+D:\CSI 402\Gamesgiftshop\obj\verify-build\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+D:\CSI 402\Gamesgiftshop\bin\Debug\net10.0\Gamesgiftshop.exe
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-report-build\appsettings.Development.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-report-build\appsettings.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-report-build\Gamesgiftshop.staticwebassets.runtime.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-report-build\Gamesgiftshop.staticwebassets.endpoints.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-report-build\Gamesgiftshop.deps.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-report-build\Gamesgiftshop.runtimeconfig.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-report-build\Gamesgiftshop.dll
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-report-build\Gamesgiftshop.pdb
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-manager-build\appsettings.Development.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-manager-build\appsettings.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-manager-build\Gamesgiftshop.staticwebassets.runtime.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-manager-build\Gamesgiftshop.staticwebassets.endpoints.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-manager-build\Gamesgiftshop.deps.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-manager-build\Gamesgiftshop.runtimeconfig.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-manager-build\Gamesgiftshop.dll
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-manager-build\Gamesgiftshop.pdb
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-users-fix-build\appsettings.Development.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-users-fix-build\appsettings.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-users-fix-build\Gamesgiftshop.staticwebassets.runtime.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-users-fix-build\Gamesgiftshop.staticwebassets.endpoints.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-users-fix-build\Gamesgiftshop.deps.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-users-fix-build\Gamesgiftshop.runtimeconfig.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-users-fix-build\Gamesgiftshop.dll
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-users-fix-build\Gamesgiftshop.pdb
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-staff-build\appsettings.Development.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-staff-build\appsettings.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-staff-build\Gamesgiftshop.staticwebassets.runtime.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-staff-build\Gamesgiftshop.staticwebassets.endpoints.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-staff-build\Gamesgiftshop.exe
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-staff-build\Gamesgiftshop.deps.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-staff-build\Gamesgiftshop.runtimeconfig.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-staff-build\Gamesgiftshop.dll
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-staff-build\Gamesgiftshop.pdb
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-product-name-build\appsettings.Development.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-product-name-build\appsettings.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-product-name-build\Gamesgiftshop.staticwebassets.runtime.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-product-name-build\Gamesgiftshop.staticwebassets.endpoints.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-product-name-build\Gamesgiftshop.exe
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-product-name-build\Gamesgiftshop.deps.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-product-name-build\Gamesgiftshop.runtimeconfig.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-product-name-build\Gamesgiftshop.dll
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-product-name-build\Gamesgiftshop.pdb
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-clean-build\appsettings.Development.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-clean-build\appsettings.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-clean-build\Gamesgiftshop.staticwebassets.runtime.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-clean-build\Gamesgiftshop.staticwebassets.endpoints.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-clean-build\Gamesgiftshop.exe
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-clean-build\Gamesgiftshop.deps.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-clean-build\Gamesgiftshop.runtimeconfig.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-clean-build\Gamesgiftshop.dll
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-clean-build\Gamesgiftshop.pdb
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-notifications-build\appsettings.Development.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-notifications-build\appsettings.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-notifications-build\Gamesgiftshop.staticwebassets.runtime.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-notifications-build\Gamesgiftshop.staticwebassets.endpoints.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-notifications-build\Gamesgiftshop.exe
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-notifications-build\Gamesgiftshop.deps.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-notifications-build\Gamesgiftshop.runtimeconfig.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-notifications-build\Gamesgiftshop.dll
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-notifications-build\Gamesgiftshop.pdb
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-light-theme-build\appsettings.Development.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-light-theme-build\appsettings.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-light-theme-build\Gamesgiftshop.staticwebassets.runtime.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-light-theme-build\Gamesgiftshop.staticwebassets.endpoints.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-light-theme-build\Gamesgiftshop.exe
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-light-theme-build\Gamesgiftshop.deps.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-light-theme-build\Gamesgiftshop.runtimeconfig.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-light-theme-build\Gamesgiftshop.dll
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-light-theme-build\Gamesgiftshop.pdb
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-ui-preview\appsettings.Development.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-ui-preview\appsettings.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-ui-preview\Gamesgiftshop.staticwebassets.runtime.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-ui-preview\Gamesgiftshop.staticwebassets.endpoints.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-ui-preview\Gamesgiftshop.exe
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-ui-preview\Gamesgiftshop.deps.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-ui-preview\Gamesgiftshop.runtimeconfig.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-ui-preview\Gamesgiftshop.dll
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-ui-preview\Gamesgiftshop.pdb
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-light-theme-final\appsettings.Development.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-light-theme-final\appsettings.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-light-theme-final\Gamesgiftshop.staticwebassets.runtime.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-light-theme-final\Gamesgiftshop.staticwebassets.endpoints.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-light-theme-final\Gamesgiftshop.exe
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-light-theme-final\Gamesgiftshop.deps.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-light-theme-final\Gamesgiftshop.runtimeconfig.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-light-theme-final\Gamesgiftshop.dll
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-light-theme-final\Gamesgiftshop.pdb
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-build\appsettings.Development.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-build\appsettings.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-build\Gamesgiftshop.staticwebassets.runtime.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-build\Gamesgiftshop.staticwebassets.endpoints.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-build\Gamesgiftshop.exe
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-build\Gamesgiftshop.deps.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-build\Gamesgiftshop.runtimeconfig.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-build\Gamesgiftshop.dll
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-build\Gamesgiftshop.pdb
+D:\CSI 402\Gamesgiftshop\obj\Debug\net10.0\compressed\l9edwtfcsw-{0}-4dlyczqcqr-4dlyczqcqr.gz

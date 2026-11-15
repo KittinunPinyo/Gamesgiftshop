@@ -1,0 +1,91 @@
+@model IEnumerable<Gamesgiftshop.Models.Order>
+@{
+    Layout = "_StaffLayout";
+    ViewData["Title"] = "จัดเตรียมคำสั่งซื้อ";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">จัดเตรียมคำสั่งซื้อ</h1>
+        <div class="text-muted">แสดงเฉพาะออเดอร์ที่ชำระเงินสำเร็จและกำลังเตรียมจัดส่ง</div>
+    </div>
+</div>
+
+@if (TempData["StaffError"] != null)
+{
+    <div class="alert alert-danger">@TempData["StaffError"]</div>
+}
+@if (TempData["StaffSuccess"] != null)
+{
+    <div class="alert alert-success">@TempData["StaffSuccess"]</div>
+}
+
+@if (!Model.Any())
+{
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body text-center text-muted py-5">ไม่มีออเดอร์ที่ต้องจัดเตรียมในขณะนี้</div>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var order in Model)
+        {
+            <div class="col-12">
+                <section class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+                            <div>
+                                <h2 class="h5 fw-bold mb-1">ออเดอร์ #@order.OrderId</h2>
+                                <div class="small text-muted">วันที่สั่งซื้อ: @(order.OrderDate?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
+                                <div class="small text-muted">ผู้ใช้ #@order.UserId</div>
+                            </div>
+                            <span class="badge rounded-pill @(order.Status == "เตรียมจัดส่ง" ? "text-bg-info" : "text-bg-success")">@order.Status</span>
+                        </div>
+                        <div class="row g-4">
+                            <div class="col-lg-7">
+                                <h3 class="h6 fw-bold">รายการสินค้า</h3>
+                                <ul class="list-group list-group-flush">
+                                    @foreach (var detail in order.Orderdetails)
+                                    {
+                                        <li class="list-group-item px-0 d-flex justify-content-between gap-3">
+                                            <span>@(detail.Product?.Name ?? $"สินค้า #{detail.ProductId}")</span>
+                                            <span class="text-nowrap">x @detail.Quantity</span>
+                                        </li>
+                                    }
+                                </ul>
+                                <div class="mt-3 fw-semibold">ยอดรวม: ฿@order.TotalAmount.ToString("N2")</div>
+                                @if (!string.IsNullOrWhiteSpace(order.ShippingAddress))
+                                {
+                                    <div class="small text-muted mt-2">ที่อยู่จัดส่ง: @order.ShippingAddress</div>
+                                }
+                            </div>
+                            <div class="col-lg-5 d-flex align-items-center">
+                                @if (order.Status == "ชำระเงินสำเร็จแล้ว")
+                                {
+                                    <form asp-action="StartPacking" method="post" class="w-100">
+                                        <input type="hidden" name="orderId" value="@order.OrderId" />
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="fa-solid fa-box-open me-2"></i>เริ่ม Pick &amp; Pack และตัดสต็อก
+                                        </button>
+                                    </form>
+                                }
+                                else if (order.Status == "เตรียมจัดส่ง")
+                                {
+                                    <form asp-action="ConfirmShipment" method="post" class="w-100">
+                                        <input type="hidden" name="orderId" value="@order.OrderId" />
+                                        <label class="form-label" for="tracking-@order.OrderId">เลขติดตามพัสดุ</label>
+                                        <div class="input-group">
+                                            <input class="form-control" id="tracking-@order.OrderId" name="trackingNumber" maxlength="100" required placeholder="กรอก Tracking Number" />
+                                            <button type="submit" class="btn btn-success"><i class="fa-solid fa-truck-fast me-1"></i>ยืนยันจัดส่ง</button>
+                                        </div>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        }
+    </div>
+}

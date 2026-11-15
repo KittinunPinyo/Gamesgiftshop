@@ -46,7 +46,7 @@
 
     /* ================= ช่องกรอกข้อมูล ================= */
     .input-group-custom { position: relative; margin-bottom: 20px; }
-    .input-group-custom i {
+    .input-group-custom > i {
         position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
         color: #64748b; font-size: 1.1rem; transition: 0.2s;
     }
@@ -134,12 +134,16 @@
             <label class="form-label">รหัสผ่าน</label>
             <div class="input-group-custom" style="margin-bottom: 25px;">
                 <!-- ⭐️ เพิ่ม minlength="6" และระบบแจ้งเตือนภาษาไทยตรงนี้ ⭐️ -->
-                <input asp-for="Password" type="password" class="form-control-modern" placeholder="ตั้งรหัสผ่าน 6 ตัวอักษรขึ้นไป" 
+                <input asp-for="Password" id="register-password" type="password" class="form-control-modern has-password-toggle" placeholder="ตั้งรหัสผ่าน 6 ตัวอักษรขึ้นไป"
                        minlength="6" 
                        required 
                        oninvalid="this.setCustomValidity('กรุณาตั้งรหัสผ่านอย่างน้อย 6 ตัวอักษร')" 
                        oninput="this.setCustomValidity('')" />
                 <i class="fa-solid fa-lock"></i>
+                <button type="button" class="password-visibility-toggle" data-toggle-password
+                        aria-label="แสดงรหัสผ่าน" aria-controls="register-password" aria-pressed="false">
+                    <i class="fa-solid fa-eye" aria-hidden="true"></i>
+                </button>
             </div>
 
             <button type="submit" class="btn-primary-custom">สมัครสมาชิก</button>

@@ -56,17 +56,17 @@
                 </a>
             </li>
             <li>
-                <a href="#" class="text-muted">
+                <a href="/Manager/Promotions" class="@(ViewContext.RouteData.Values["Action"].ToString() == "Promotions" ? "active" : "")">
                     <i class="fa-solid fa-tags"></i> <span>โปรโมชั่น & Flash Sale</span>
                 </a>
             </li>
             <li>
-                <a href="#" class="text-muted">
+                <a href="/Manager/Reports" class="@(ViewContext.RouteData.Values["Action"].ToString() == "Reports" ? "active" : "")">
                     <i class="fa-solid fa-chart-pie"></i> <span>รายงานยอดขาย</span>
                 </a>
             </li>
             <li>
-                <a href="#" class="text-muted">
+                <a href="/Manager/Users" class="@(ViewContext.RouteData.Values["Action"].ToString() == "Users" ? "active" : "")">
                     <i class="fa-solid fa-users-slash"></i> <span>จัดการบัญชีลูกค้า</span>
                 </a>
             </li>

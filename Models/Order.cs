@@ -19,5 +19,11 @@ public partial class Order
 
     public string? Status { get; set; }
 
+    public int LoyaltyPointsRedeemed { get; set; }
+
+    public string? AppliedPromoCode { get; set; }
+
+    public string? TrackingNumber { get; set; }
+
     public virtual ICollection<Orderdetail> Orderdetails { get; set; } = new List<Orderdetail>();
 }

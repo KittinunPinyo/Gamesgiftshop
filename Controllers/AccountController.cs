@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Gamesgiftshop.Models;
 using System.Linq;
@@ -98,6 +100,11 @@ namespace Gamesgiftshop.Controllers
                 return RedirectToAction("Dashboard", "Manager");
             }
 
+            if (user.Role == "Staff")
+            {
+                return RedirectToAction("Dashboard", "Staff");
+            }
+
             return RedirectToAction("Index", "Home");
         }
 
@@ -120,10 +127,54 @@ namespace Gamesgiftshop.Controllers
                 ViewBag.User = currentUser;
                 ViewBag.Phone = currentUser.Phone;
                 ViewBag.Addresses = _db.Useraddresses.Where(a => a.UserId == currentUser.UserId).ToList();
-                myOrders = _db.Orders.Where(o => o.UserId == currentUser.UserId).OrderByDescending(o => o.OrderDate).ToList();
+                
+                // ⭐️ ดึงข้อมูลประวัติคำสั่งซื้อ พร้อม Include รายละเอียดสินค้าและชื่อสินค้า ⭐️
+                myOrders = _db.Orders
+                    .Include(o => o.Orderdetails)
+                        .ThenInclude(od => od.Product)
+                    .Where(o => o.UserId == currentUser.UserId)
+                    .OrderByDescending(o => o.OrderDate)
+                    .ToList();
+                var eligibleOrders = myOrders
+                    .Where(order => !IsCancelledOrder(order.Status))
+                    .ToList();
+                ViewBag.LoyaltyPoints = Math.Max(0,
+                    (int)Math.Floor(eligibleOrders.Sum(order => order.TotalAmount) / 100m) -
+                    eligibleOrders.Sum(order => order.LoyaltyPointsRedeemed));
             }
 
             return View(myOrders);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult OpenNotification(int notificationId)
+        {
+            var userId = _db.Users
+                .Where(user => user.Username == User.Identity!.Name)
+                .Select(user => (int?)user.UserId)
+                .FirstOrDefault();
+            if (!userId.HasValue) return NotFound();
+
+            var notification = _db.UserNotifications.FirstOrDefault(item =>
+                item.UserNotificationId == notificationId && item.UserId == userId.Value);
+            if (notification == null) return NotFound();
+
+            if (!notification.IsRead)
+            {
+                notification.IsRead = true;
+                _db.SaveChanges();
+            }
+
+            return RedirectToAction(nameof(Profile));
+        }
+
+        private static bool IsCancelledOrder(string? status)
+        {
+            return status == "ยกเลิก" || status == "ยกเลิกแล้ว" ||
+                   string.Equals(status, "Cancelled", System.StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(status, "Canceled", System.StringComparison.OrdinalIgnoreCase);
         }
 
         // ==========================================
@@ -203,7 +254,6 @@ namespace Gamesgiftshop.Controllers
         [HttpPost]
         public IActionResult ForgotPassword(string Username, string Email, string NewPassword)
         {
-            // ⭐️ ดักจับตรวจสอบรหัสผ่านใหม่ ต้องมีอย่างน้อย 6 ตัวอักษร
             if (string.IsNullOrEmpty(NewPassword) || NewPassword.Length < 6)
             {
                 ViewBag.Error = "รหัสผ่านใหม่ต้องมีอย่างน้อย 6 ตัวอักษร";

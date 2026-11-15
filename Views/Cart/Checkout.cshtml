@@ -5,11 +5,12 @@
     ViewData["Title"] = "ชำระเงิน - Games Gift Shop";
     
     decimal grandTotal = ViewBag.GrandTotal ?? 0;
+    decimal discount = ViewBag.Discount ?? 0;
 
     var currentUsername = User.Identity.Name;
     var currentUser = _db.Users.FirstOrDefault(u => u.Username == currentUsername);
 
-    // ดึงข้อมูลที่อยู่โดยบังคับให้เป็น List<Useraddress> ทั้งสองกรณีเพื่อป้องกัน Type ชนกัน
+    // ดึงข้อมูลที่อยู่
     List<Useraddress> addresses = new List<Useraddress>();
     if (currentUser != null)
     {
@@ -19,6 +20,9 @@
     var mainAddress = addresses.FirstOrDefault(a => a.IsDefault == true) ?? addresses.FirstOrDefault();
     string defaultAddressVal = mainAddress != null ? mainAddress.AddressDetail : "";
 }
+
+<!-- ⭐️ นำเข้าไลบรารี SweetAlert2 สำหรับทำ Alert สวยๆ ⭐️ -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <style>
     /* ================= ธีม Dark Minimalist ================= */
@@ -50,10 +54,6 @@
     
     .address-badge { position: absolute; top: 20px; right: 20px; background-color: #1e293b; color: #cbd5e1; font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; border: 1px solid #334155; transition: 0.2s; }
     .address-label input[type="radio"]:checked + .address-box .address-badge { background-color: #6366f1; color: white; border-color: #6366f1; }
-
-    .address-name { font-weight: 700; color: #ffffff; font-size: 1.1rem; margin-bottom: 5px; }
-    .address-phone { color: #94a3b8; font-size: 0.85rem; margin-bottom: 10px; }
-    .address-detail { color: #cbd5e1; font-size: 0.9rem; line-height: 1.5; }
 
     .btn-add-address { background-color: transparent; color: #94a3b8; border: 1px dashed #475569; width: 100%; padding: 12px; border-radius: 12px; font-weight: 600; transition: 0.2s; text-decoration: none; display: block; text-align: center; }
     .btn-add-address:hover { background-color: #1e293b; color: white; border-color: #64748b; }
@@ -108,9 +108,40 @@
                                     {
                                         <div class="address-badge">ที่อยู่หลัก</div>
                                     }
-                                    <div class="address-name">@(currentUser != null ? currentUser.Username : "ชื่อลูกค้า")</div>
-                                    <div class="address-phone">เบอร์โทรศัพท์: (ไม่มีข้อมูลในระบบ)</div>
-                                    <div class="address-detail">@addr.AddressDetail</div>
+                                    
+                                    @{
+                                        // ⭐️ จัดการแยกชื่อ เบอร์ และที่อยู่ออกจากกัน
+                                        string parsedName = currentUser != null ? currentUser.Username : "ชื่อลูกค้า";
+                                        string parsedPhone = "";
+                                        string parsedAddress = addr.AddressDetail ?? "";
+
+                                        if (parsedAddress.Contains("ชื่อ:") && parsedAddress.Contains("โทร:") && parsedAddress.Contains("ที่อยู่:"))
+                                        {
+                                            var parts = parsedAddress.Split('|');
+                                            if (parts.Length >= 3)
+                                            {
+                                                parsedName = parts[0].Replace("ชื่อ:", "").Trim();
+                                                parsedPhone = parts[1].Replace("โทร:", "").Trim();
+                                                parsedAddress = parts[2].Replace("ที่อยู่:", "").Trim();
+                                            }
+                                        }
+                                    }
+
+                                    <!-- บรรทัดบน: ชื่อ + เบอร์โทรศัพท์ -->
+                                    <div style="display: flex; align-items: baseline; gap: 15px; margin-bottom: 8px;">
+                                        <h5 style="margin-bottom: 0; font-size: 1.15rem; color: #ffffff; font-weight: 700;">@parsedName</h5>
+                                        @if(!string.IsNullOrEmpty(parsedPhone))
+                                        {
+                                            <span style="color: #94a3b8; font-size: 0.9rem;">
+                                                <i class="fa-solid fa-phone" style="font-size: 0.8rem; margin-right: 4px;"></i>@parsedPhone
+                                            </span>
+                                        }
+                                    </div>
+                                    
+                                    <!-- บรรทัดล่าง: รายละเอียดที่อยู่ -->
+                                    <div class="address-detail" style="font-size: 1rem; color: #cbd5e1; white-space: pre-line;">
+                                        @parsedAddress
+                                    </div>
                                 </div>
                             </label>
                         }
@@ -131,7 +162,13 @@
                 <div class="mt-auto pt-4">
                     <h3 class="section-header">สรุปคำสั่งซื้อ</h3>
                     <div class="total-amount-box">
-                        <span class="total-amount-label">ยอดที่ต้องชำระทั้งสิ้น</span>
+                        <div>
+                            <span class="total-amount-label">ยอดที่ต้องชำระทั้งสิ้น</span>
+                            @if (discount > 0)
+                            {
+                                <div class="small text-success mt-1">หักส่วนลดแล้ว ฿@discount.ToString("N0")</div>
+                            }
+                        </div>
                         <span class="total-amount-value">฿@grandTotal.ToString("N0")</span>
                     </div>
                 </div>
@@ -159,16 +196,18 @@
                 <h3 class="section-header mt-4 pt-3 border-top" style="border-color: #222631 !important;">แนบหลักฐานการโอนเงิน</h3>
                 <p class="upload-instruction">กรุณาแนบรูปภาพสลิปโอนเงินเพื่อยืนยันคำสั่งซื้อ (รองรับไฟล์ JPG, PNG)</p>
 
-                <!-- ฟอร์มยืนยันคำสั่งซื้อและแนบสลิป (เพิ่ม enctype) -->
-                <form action="/Cart/ConfirmOrder" method="post" enctype="multipart/form-data">
+                <!-- ฟอร์มยืนยันคำสั่งซื้อและแนบสลิป (ใส่ onsubmit เพื่อตรวจไฟล์) -->
+                <form action="/Cart/ConfirmOrder" method="post" enctype="multipart/form-data" onsubmit="return validateCheckoutForm()">
+                    
                     <input type="hidden" id="finalAddressInput" name="address" value="@defaultAddressVal" />
+
+                    <!-- กล่องอัปโหลดที่มีปุ่มกากบาท -->
                     <div style="position: relative; margin-bottom: 20px;">
                         <label class="upload-box w-100 mb-0" for="paymentSlip" id="uploadArea">
                             <div class="upload-icon"><i class="fa-solid fa-camera"></i></div>
                             <div class="upload-text" id="fileNameDisplay"><span>คลิกเพื่ออัปโหลด</span> หรือลากไฟล์มาวางที่นี่</div>
                         </label>
                         
-                        <!-- ปุ่มกากบาทสำหรับลบรูป (ซ่อนไว้ตอนแรก) -->
                         <button type="button" id="removeFileBtn" class="btn btn-sm btn-danger d-none" 
                                 style="position: absolute; top: 15px; right: 15px; border-radius: 50%; width: 32px; height: 32px; padding: 0; display: flex; justify-content: center; align-items: center; z-index: 10;" 
                                 onclick="clearFileSelection()" title="ลบไฟล์ที่เลือก">
@@ -176,7 +215,7 @@
                         </button>
                     </div>
                     
-                    <input type="file" id="paymentSlip" name="paymentSlip" accept="image/jpeg, image/png, image/jpg" class="d-none" required onchange="showFileName(this)">
+                    <input type="file" id="paymentSlip" name="paymentSlip" accept="image/jpeg, image/png, image/jpg" class="d-none" onchange="showFileName(this)">
                     
                     <button type="submit" class="btn-confirm">
                         <i class="fa-solid fa-check-circle"></i> ยืนยันคำสั่งซื้อและส่งสลิป
@@ -190,12 +229,12 @@
 </div>
 
 <script>
-    // อัปเดตที่อยู่
+    // ส่งข้อมูล Input ที่ซ่อนอยู่เมื่อเปลี่ยนที่อยู่
     function updateSelectedAddress(selectedValue) {
         document.getElementById('finalAddressInput').value = selectedValue;
     }
 
-    // แสดงชื่อไฟล์เมื่ออัปโหลด
+    // แสดงชื่อไฟล์เมื่ออัปโหลดและเปลี่ยนสไตล์ปุ่ม
     function showFileName(input) {
         const display = document.getElementById('fileNameDisplay');
         const uploadArea = document.getElementById('uploadArea');
@@ -203,27 +242,25 @@
         const removeBtn = document.getElementById('removeFileBtn');
         
         if (input.files && input.files[0]) {
-            // แสดงชื่อไฟล์ และเปลี่ยนสีกรอบ/ไอคอนให้เป็นสีเขียว
             display.innerHTML = '<span style="color: #10b981;">' + input.files[0].name + '</span>';
             uploadArea.style.borderColor = '#10b981';
             uploadArea.style.backgroundColor = 'rgba(16, 185, 129, 0.05)';
             icon.className = 'fa-solid fa-image';
             icon.style.color = '#10b981';
-            // แสดงปุ่มลบ 
             removeBtn.classList.remove('d-none');
         } else {
             resetUploadBox();
         }
     }
 
-    // ฟังก์ชันเคลียร์ไฟล์ที่เลือก
+    // ลบไฟล์ที่เลือกทิ้ง
     function clearFileSelection() {
         const input = document.getElementById('paymentSlip');
-        input.value = ''; // เคลียร์ค่าไฟล์ที่ถูกเลือกไว้
-        resetUploadBox(); // รีเซ็ตหน้าตา UI กลับเป็นเหมือนเดิม
+        input.value = '';
+        resetUploadBox();
     }
 
-    // ฟังก์ชันรีเซ็ต UI กล่องอัปโหลด
+    // รีเซ็ตหน้าตากลับไปเป็นตอนยังไม่แนบสลิป
     function resetUploadBox() {
         const display = document.getElementById('fileNameDisplay');
         const uploadArea = document.getElementById('uploadArea');
@@ -235,7 +272,35 @@
         uploadArea.style.backgroundColor = '#0f1115';
         icon.className = 'fa-solid fa-camera';
         icon.style.color = '#64748b';
-        // ซ่อนปุ่มลบ
         removeBtn.classList.add('d-none');
+    }
+
+    // ⭐️ ฟังก์ชันตรวจสอบก่อนกดยืนยันคำสั่งซื้อ (SweetAlert2) ⭐️
+    function validateCheckoutForm() {
+        const slipInput = document.getElementById('paymentSlip');
+        
+        // เช็คว่ายังไม่ได้เลือกไฟล์ใช่หรือไม่
+        if (!slipInput.files || slipInput.files.length === 0) {
+            
+            // ใช้ SweetAlert2 แสดงแจ้งเตือนสวยๆ
+            Swal.fire({
+                icon: 'warning',
+                title: 'ข้อมูลไม่ครบถ้วน',
+                text: 'กรุณาแนบรูปภาพสลิปโอนเงินก่อนทำการยืนยันคำสั่งซื้อครับ',
+                confirmButtonText: 'ตกลง',
+                confirmButtonColor: '#1d67d6',
+                background: '#ffffff',
+                color: '#173a61'
+            });
+            
+            // เปลี่ยนสีกรอบอัปโหลดให้เป็นสีแดงเพื่อเตือนลูกค้า
+            const uploadArea = document.getElementById('uploadArea');
+            uploadArea.style.borderColor = '#ef4444';
+            uploadArea.style.backgroundColor = 'rgba(239, 68, 68, 0.05)';
+            
+            return false; // ยกเลิกการส่งฟอร์ม (ไม่ให้ไปต่อ)
+        }
+        
+        return true; // มีไฟล์แล้ว ยอมให้ส่งฟอร์มได้
     }
 </script>

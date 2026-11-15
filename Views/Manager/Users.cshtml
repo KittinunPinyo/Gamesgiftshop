@@ -1,0 +1,116 @@
+@model Gamesgiftshop.Models.ManagerUsersViewModel
+@{
+    Layout = "_ManagerLayout";
+    ViewData["Title"] = "จัดการบัญชีผู้ใช้";
+}
+
+<style>
+    .users-card { background: #fff; border: 0; border-radius: 14px; box-shadow: 0 4px 18px rgba(30, 41, 59, .07); }
+    .user-avatar { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #ede9fe; color: #4a3b8c; font-weight: 700; }
+</style>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">จัดการบัญชีผู้ใช้</h1>
+        <div class="text-muted">ค้นหาบัญชีและกำหนดสิทธิ์ User, Staff หรือ Manager โดยไม่ลบประวัติคำสั่งซื้อ</div>
+    </div>
+</div>
+
+@if (TempData["UserManagementSuccess"] != null)
+{
+    <div class="alert alert-success">@TempData["UserManagementSuccess"]</div>
+}
+@if (TempData["UserManagementError"] != null)
+{
+    <div class="alert alert-danger">@TempData["UserManagementError"]</div>
+}
+
+<div class="users-card p-4 mb-4">
+    <form method="get" asp-action="Users" class="row g-3 align-items-end">
+        <div class="col-md-6">
+            <label class="form-label" for="search">ค้นหาชื่อผู้ใช้หรืออีเมล</label>
+            <input class="form-control" type="search" id="search" name="search" value="@Model.Search" placeholder="กรอกชื่อหรืออีเมล" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label" for="role">สิทธิ์</label>
+            <select class="form-select" id="role" name="role">
+                <option value="">ทั้งหมด</option>
+                <option value="User" selected="@(Model.RoleFilter == "User")">User</option>
+                <option value="Staff" selected="@(Model.RoleFilter == "Staff")">Staff</option>
+                <option value="Manager" selected="@(Model.RoleFilter == "Manager")">Manager</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-grow-1"><i class="fa-solid fa-magnifying-glass me-1"></i> ค้นหา</button>
+            <a asp-action="Users" class="btn btn-outline-secondary">ล้าง</a>
+        </div>
+    </form>
+</div>
+
+<div class="users-card p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 fw-bold mb-0">บัญชีผู้ใช้</h2>
+        <span class="badge text-bg-secondary">@Model.Users.Count รายการ</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>ผู้ใช้</th>
+                    <th>อีเมล</th>
+                    <th>โทรศัพท์</th>
+                    <th class="text-center">ออเดอร์</th>
+                    <th>สิทธิ์</th>
+                    <th class="text-end">เปลี่ยนสิทธิ์</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Users.Any())
+                {
+                    foreach (var user in Model.Users)
+                    {
+                        <tr>
+                            <td>
+                                <span class="user-avatar me-2">@(!string.IsNullOrEmpty(user.Username) ? user.Username.Substring(0, 1).ToUpperInvariant() : "?")</span>
+                                <span class="fw-semibold">@user.Username</span>
+                                @if (user.Username == Model.CurrentUsername)
+                                {
+                                    <span class="badge text-bg-light ms-1">บัญชีนี้</span>
+                                }
+                            </td>
+                            <td>@user.Email</td>
+                            <td>@(string.IsNullOrWhiteSpace(user.Phone) ? "—" : user.Phone)</td>
+                            <td class="text-center">@user.OrderCount</td>
+                            <td><span class="badge @(user.Role == "Manager" ? "text-bg-primary" : user.Role == "Staff" ? "text-bg-info" : "text-bg-secondary")">@user.Role</span></td>
+                            <td class="text-end">
+                                @if (user.Username != Model.CurrentUsername)
+                                {
+                                    <form asp-action="UpdateUserRole" method="post" class="d-inline-flex gap-2">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="userId" value="@user.UserId" />
+                                        <input type="hidden" name="search" value="@Model.Search" />
+                                        <input type="hidden" name="roleFilter" value="@Model.RoleFilter" />
+                                        <select class="form-select form-select-sm" name="newRole" aria-label="สิทธิ์ใหม่สำหรับ @user.Username">
+                                            <option value="User" selected="@(user.Role == "User")">User</option>
+                                            <option value="Staff" selected="@(user.Role == "Staff")">Staff</option>
+                                            <option value="Manager" selected="@(user.Role == "Manager")">Manager</option>
+                                        </select>
+                                        <button class="btn btn-sm btn-outline-primary" type="submit">บันทึก</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="small text-muted">ป้องกันการเปลี่ยนสิทธิ์ตัวเอง</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-5">ไม่พบบัญชีผู้ใช้</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
