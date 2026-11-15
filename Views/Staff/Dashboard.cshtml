@@ -88,7 +88,13 @@ else
                                     @foreach (var detail in order.Orderdetails)
                                     {
                                         <li class="list-group-item px-0 d-flex justify-content-between gap-3">
-                                            <span>@(detail.Product?.Name ?? $"สินค้า #{detail.ProductId}")</span>
+                                            <span>
+                                                @(detail.Product?.Name ?? $"สินค้า #{detail.ProductId}")
+                                                @if (!string.IsNullOrWhiteSpace(detail.Size))
+                                                {
+                                                    <span class="small text-muted">ไซซ์ @detail.Size</span>
+                                                }
+                                            </span>
                                             <span class="text-nowrap">x @detail.Quantity</span>
                                         </li>
                                     }

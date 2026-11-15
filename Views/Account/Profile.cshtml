@@ -367,6 +367,10 @@
                                                 <span class="text-truncate">
                                                     @(detail.Product != null ? detail.Product.Name : "สินค้า ID: " + detail.ProductId)
                                                 </span>
+                                                @if (!string.IsNullOrWhiteSpace(detail.Size))
+                                                {
+                                                    <span class="small">ไซซ์ @detail.Size</span>
+                                                }
                                                 
                                                 <!-- จำนวนชิ้น -->
                                                 <span style="color: #6366f1; font-weight: 700; font-size: 0.85rem; background: rgba(99,102,241,0.1); padding: 2px 6px; border-radius: 4px;">

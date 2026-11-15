@@ -92,6 +92,7 @@ public partial class Csi402dbContext : DbContext
             entity.HasIndex(e => e.ProductId, "ProductId");
 
             entity.Property(e => e.Price).HasPrecision(10, 2);
+            entity.Property(e => e.Size).HasMaxLength(10);
 
             entity.HasOne(d => d.Order).WithMany(p => p.Orderdetails)
                 .HasForeignKey(d => d.OrderId)

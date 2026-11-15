@@ -429,12 +429,21 @@
                             </div>
                             
                             <!-- ฟอร์มปุ่มเพิ่มลงตะกร้า (แก้ไขเพิ่มไอคอนแล้ว) -->
-                            <form action="/Cart/Add" method="post" class="w-100 mb-0">
-                                <input type="hidden" name="productId" value="@item.ProductId" />
-                                <button type="submit" class="btn btn-cart w-100">
-                                    <i class="fa-solid fa-cart-plus me-1"></i> หยิบใส่ตะกร้า
-                                </button>
-                            </form>
+                            @if (string.Equals(item.Category, "เสื้อผ้า", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <a href="/Product/Details/@item.ProductId" class="btn btn-cart w-100 text-center">
+                                    <i class="fa-solid fa-shirt me-1"></i> เลือกไซส์และหยิบใส่ตะกร้า
+                                </a>
+                            }
+                            else
+                            {
+                                <form action="/Cart/Add" method="post" class="w-100 mb-0">
+                                    <input type="hidden" name="productId" value="@item.ProductId" />
+                                    <button type="submit" class="btn btn-cart w-100">
+                                        <i class="fa-solid fa-cart-plus me-1"></i> หยิบใส่ตะกร้า
+                                    </button>
+                                </form>
+                            }
                         </div>
                         
                     </div>

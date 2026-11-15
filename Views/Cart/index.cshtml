@@ -10,6 +10,7 @@
     
     // เช็คว่า Model ถูกส่งมาไหม และมีสินค้าใน Items หรือเปล่า
     bool isCartEmpty = Model == null || Model.Items == null || !Model.Items.Any();
+    var cartError = TempData["CartError"] as string;
 }
 
 <style>
@@ -102,6 +103,10 @@
                         // ดึงข้อมูลสินค้าจาก Database เพื่อเช็ค StockQuantity ปัจจุบัน
                         var dbProduct = _db.Products.FirstOrDefault(p => p.ProductId == item.ProductId);
                         int currentStock = dbProduct != null ? (dbProduct.StockQuantity ?? 0) : 0;
+                        int otherSizeQuantity = Model.Items
+                            .Where(cartItem => cartItem.ProductId == item.ProductId && cartItem.Size != item.Size)
+                            .Sum(cartItem => cartItem.Quantity);
+                        int maxItemQuantity = Math.Max(0, currentStock - otherSizeQuantity);
 
                         // ⭐️ จัดการดึงรููปภาพแรกสุดของสินค้า ⭐️
                         string cartImg = "https://via.placeholder.com/150?text=No+Image";
@@ -117,11 +122,16 @@
                             <div class="item-details">
                                 <a href="/Product/Details/@item.ProductId" class="item-name">@item.Name</a>
                                 <span class="item-category">@item.Category</span>
+                                @if (!string.IsNullOrEmpty(item.Size))
+                                {
+                                    <span class="item-category d-block">ไซซ์ @item.Size</span>
+                                }
                             </div>
                             
                             <!-- ฟอร์มสำหรับปรับเพิ่ม/ลดจำนวนสินค้า -->
                             <form action="/Cart/UpdateQty" method="post" class="qty-controls mb-0">
                                 <input type="hidden" name="productId" value="@item.ProductId" />
+                                <input type="hidden" name="size" value="@item.Size" />
                                 
                                 <!-- ปุ่มลดจำนวน (ปิดใช้งานถ้าจำนวน = 1) -->
                                 <button type="submit" name="quantity" value="@(item.Quantity - 1)" class="btn-qty" @(item.Quantity <= 1 ? "disabled" : "")>
@@ -131,7 +141,7 @@
                                 <input type="text" class="qty-input" value="@item.Quantity" readonly>
                                 
                                 <!-- ปุ่มเพิ่มจำนวน (ปิดใช้งานถ้าจำนวน >= สต็อกที่มี) -->
-                                <button type="submit" name="quantity" value="@(item.Quantity + 1)" class="btn-qty" @(item.Quantity >= currentStock ? "disabled" : "") title="@(item.Quantity >= currentStock ? "สินค้าหมดสต๊อก" : "")">
+                                <button type="submit" name="quantity" value="@(item.Quantity + 1)" class="btn-qty" @(item.Quantity >= maxItemQuantity ? "disabled" : "") title="@(item.Quantity >= maxItemQuantity ? "สินค้าหมดสต๊อก" : "")">
                                     <i class="fa-solid fa-plus"></i>
                                 </button>
                             </form>
@@ -140,7 +150,7 @@
                             <div class="item-price">฿@item.Total.ToString("N0")</div>
                             
                             <!-- ปุ่มลบสินค้าออกจากตะกร้า -->
-                            <a href="/Cart/Remove?productId=@item.ProductId" class="btn-remove" title="ลบสินค้า">
+                            <a href="/Cart/Remove?productId=@item.ProductId&amp;size=@Uri.EscapeDataString(item.Size ?? string.Empty)" class="btn-remove" title="ลบสินค้า">
                                 <i class="fa-solid fa-trash-can"></i>
                             </a>
                         </div>
@@ -153,6 +163,10 @@
         <!-- ================= ด้านขวา: สรุปคำสั่งซื้อ ================= -->
         <div class="col-lg-4">
             <div class="cart-card">
+                @if (!string.IsNullOrWhiteSpace(cartError))
+                {
+                    <div class="alert alert-warning">@cartError</div>
+                }
                 <h3 class="summary-title">สรุปคำสั่งซื้อ (Order Summary)</h3>
 
                 <div class="summary-row">

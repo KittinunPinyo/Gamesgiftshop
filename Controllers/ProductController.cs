@@ -66,6 +66,7 @@ namespace Gamesgiftshop.Controllers
             {
                 return NotFound();
             }
+            ViewBag.RequiresClothingSize = string.Equals(product.Category, "เสื้อผ้า", StringComparison.OrdinalIgnoreCase);
             return View(product);
         }
     }

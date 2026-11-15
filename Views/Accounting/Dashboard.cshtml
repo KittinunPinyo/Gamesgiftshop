@@ -170,7 +170,8 @@
             {
                 foreach (var order in Model.SalesTransactions)
                 {
-                    var productSummary = string.Join(", ", order.Orderdetails.Select(detail => $"{detail.Product?.Name ?? "สินค้า"} × {detail.Quantity}"));
+                    var productSummary = string.Join(", ", order.Orderdetails.Select(detail =>
+                        $"{detail.Product?.Name ?? "สินค้า"}{(string.IsNullOrWhiteSpace(detail.Size) ? "" : $" (ไซซ์ {detail.Size})")} × {detail.Quantity}"));
                     <tr>
                         <td>@order.OrderDate?.ToString("dd/MM/yyyy HH:mm")</td>
                         <td class="fw-semibold">#@order.OrderId</td>

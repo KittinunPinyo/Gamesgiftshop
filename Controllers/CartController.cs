@@ -15,6 +15,7 @@ namespace Gamesgiftshop.Controllers
         public int ProductId { get; set; }
         public string Name { get; set; }
         public string Category { get; set; }
+        public string? Size { get; set; }
         public decimal Price { get; set; }
         public int Quantity { get; set; }
         public string ImageUrl { get; set; }
@@ -44,6 +45,7 @@ namespace Gamesgiftshop.Controllers
         private const string PromoSessionSuffix = "_PromoCode";
         private const string LoyaltySessionSuffix = "_LoyaltyPoints";
         private const string PromoMessageSessionKey = "PromoMessage";
+        private static readonly string[] ClothingSizes = ["S", "M", "L", "XL", "2XL"];
 
         public CartController(Csi402dbContext db)
         {
@@ -91,7 +93,7 @@ namespace Gamesgiftshop.Controllers
                                     (!promotion.EndsAt.HasValue || promotion.EndsAt >= now))
                 .ToList();
             var baseSubtotal = cart.Subtotal;
-            var itemPrices = cart.Items.ToDictionary(item => item.ProductId, item => item.Price);
+            var itemPrices = cart.Items.ToDictionary(item => (item.ProductId, item.Size), item => item.Price);
 
             foreach (var item in cart.Items)
             {
@@ -106,7 +108,7 @@ namespace Gamesgiftshop.Controllers
                 {
                     var salePrice = item.Price * (1 - matchingFlash / 100m);
                     cart.FlashSaleDiscount += (item.Price - salePrice) * item.Quantity;
-                    itemPrices[item.ProductId] = salePrice;
+                    itemPrices[(item.ProductId, item.Size)] = salePrice;
                 }
             }
 
@@ -116,7 +118,7 @@ namespace Gamesgiftshop.Controllers
             {
                 var eligibleItems = cart.Items
                     .Where(item => string.Equals(item.Category, promotion.Category, StringComparison.OrdinalIgnoreCase))
-                    .OrderBy(item => itemPrices[item.ProductId])
+                    .OrderBy(item => itemPrices[(item.ProductId, item.Size)])
                     .ToList();
                 var totalQuantity = eligibleItems.Sum(item => item.Quantity);
                 var freeQuantity = totalQuantity / ((promotion.BuyQuantity ?? 0) + (promotion.FreeQuantity ?? 0)) *
@@ -126,7 +128,7 @@ namespace Gamesgiftshop.Controllers
                 foreach (var item in eligibleItems)
                 {
                     var freeHere = Math.Min(remainingFree, item.Quantity);
-                    savings += itemPrices[item.ProductId] * freeHere;
+                    savings += itemPrices[(item.ProductId, item.Size)] * freeHere;
                     remainingFree -= freeHere;
                     if (remainingFree == 0) break;
                 }
@@ -310,13 +312,41 @@ namespace Gamesgiftshop.Controllers
         // 2. เพิ่มสินค้าลงตะกร้า (จากหน้า Home หรือ Product)
         // ==========================================
         [HttpPost]
-        public IActionResult Add(int productId, int quantity = 1)
+        public IActionResult Add(int productId, int quantity = 1, string? size = null)
         {
             var product = _db.Products.FirstOrDefault(p => p.ProductId == productId);
             if (product == null) return RedirectToAction("Index", "Product");
 
+            var requiresSize = string.Equals(product.Category, "เสื้อผ้า", StringComparison.OrdinalIgnoreCase);
+            if (requiresSize)
+            {
+                size = size?.Trim().ToUpperInvariant();
+                if (!ClothingSizes.Contains(size))
+                {
+                    TempData["CartError"] = "กรุณาเลือกไซซ์เสื้อก่อนหยิบใส่ตะกร้า";
+                    return RedirectToAction("Details", "Product", new { id = productId });
+                }
+            }
+            else
+            {
+                size = null;
+            }
+
+            if (quantity < 1)
+                return BadRequest();
+
             var cart = GetCartItems();
-            var existingItem = cart.FirstOrDefault(c => c.ProductId == productId);
+            var existingItem = cart.FirstOrDefault(c => c.ProductId == productId && c.Size == size);
+
+            if (requiresSize)
+            {
+                var totalProductQuantity = cart.Where(item => item.ProductId == productId).Sum(item => item.Quantity);
+                if (totalProductQuantity + quantity > (product.StockQuantity ?? 0))
+                {
+                    TempData["CartError"] = "จำนวนสินค้าที่เลือกเกินสต็อกที่มี";
+                    return RedirectToAction("Details", "Product", new { id = productId });
+                }
+            }
 
             if (existingItem != null)
             {
@@ -329,6 +359,7 @@ namespace Gamesgiftshop.Controllers
                     ProductId = product.ProductId,
                     Name = product.Name,
                     Category = product.Category ?? "ทั่วไป",
+                    Size = size,
                     Price = (decimal)product.Price,
                     Quantity = quantity,
                     ImageUrl = string.IsNullOrEmpty(product.ImageUrl) ? "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&q=80" : product.ImageUrl
@@ -343,12 +374,25 @@ namespace Gamesgiftshop.Controllers
         // 3. ปรับเพิ่ม/ลด จำนวนสินค้าในตะกร้า
         // ==========================================
         [HttpPost]
-        public IActionResult UpdateQty(int productId, int quantity)
+        public IActionResult UpdateQty(int productId, int quantity, string? size = null)
         {
             var cart = GetCartItems();
-            var item = cart.FirstOrDefault(c => c.ProductId == productId);
+            var item = cart.FirstOrDefault(c => c.ProductId == productId && c.Size == size);
             if (item != null)
             {
+                var product = _db.Products.FirstOrDefault(p => p.ProductId == productId);
+                if (string.Equals(item.Category, "เสื้อผ้า", StringComparison.OrdinalIgnoreCase) && quantity > item.Quantity)
+                {
+                    var otherSizesQuantity = cart
+                        .Where(cartItem => cartItem.ProductId == productId && cartItem != item)
+                        .Sum(cartItem => cartItem.Quantity);
+                    if (quantity + otherSizesQuantity > (product?.StockQuantity ?? 0))
+                    {
+                        TempData["CartError"] = "จำนวนสินค้ารวมเกินสต็อกที่มี";
+                        return RedirectToAction(nameof(Index));
+                    }
+                }
+
                 item.Quantity = quantity;
                 if (item.Quantity <= 0) cart.Remove(item); // ถ้าจำนวนเหลือ 0 ให้ลบทิ้ง
             }
@@ -360,10 +404,10 @@ namespace Gamesgiftshop.Controllers
         // 4. ลบสินค้าออกจากตะกร้า
         // ==========================================
         [HttpGet]
-        public IActionResult Remove(int productId)
+        public IActionResult Remove(int productId, string? size = null)
         {
             var cart = GetCartItems();
-            var item = cart.FirstOrDefault(c => c.ProductId == productId);
+            var item = cart.FirstOrDefault(c => c.ProductId == productId && c.Size == size);
             if (item != null) cart.Remove(item);
             
             SaveCartItems(cart);
@@ -455,6 +499,7 @@ namespace Gamesgiftshop.Controllers
                     OrderId = newOrder.OrderId, 
                     ProductId = item.ProductId, 
                     Quantity = item.Quantity, 
+                    Size = item.Size,
                     Price = item.Price 
                 });
             }
