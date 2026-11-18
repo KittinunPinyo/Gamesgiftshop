@@ -28,19 +28,37 @@
 
 <div class="report-card p-4 mb-4">
     <form method="get" asp-action="Reports" class="row g-3 align-items-end">
-        <div class="col-sm-4 col-md-3">
+        <div class="col-sm-6 col-md-3">
+            <label class="form-label" for="period">ช่วงรายงาน</label>
+            <select class="form-select" id="period" name="period" onchange="toggleReportDateFields()">
+                <option value="daily" selected="@(Model.Period == "daily")">รายวัน</option>
+                <option value="weekly" selected="@(Model.Period == "weekly")">รายสัปดาห์</option>
+                <option value="monthly" selected="@(Model.Period == "monthly")">รายเดือน</option>
+                <option value="custom" selected="@(Model.Period == "custom")">กำหนดช่วงวันที่เอง</option>
+            </select>
+        </div>
+        <div class="col-sm-6 col-md-3" id="reportDateField">
+            <label class="form-label" for="reportDate">เลือกวันที่</label>
+            <input class="form-control" type="date" id="reportDate" name="reportDate" value="@Model.ReportDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)" />
+        </div>
+        <div class="col-sm-6 col-md-2" id="startDateField">
             <label class="form-label" for="startDate">ตั้งแต่วันที่</label>
             <input class="form-control" type="date" id="startDate" name="startDate" value="@Model.StartDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)" />
         </div>
-        <div class="col-sm-4 col-md-3">
+        <div class="col-sm-6 col-md-2" id="endDateField">
             <label class="form-label" for="endDate">ถึงวันที่</label>
             <input class="form-control" type="date" id="endDate" name="endDate" value="@Model.EndDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)" />
         </div>
-        <div class="col-sm-4 col-md-2">
+        <div class="col-sm-6 col-md-2">
             <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-filter me-1"></i> ดูรายงาน</button>
         </div>
     </form>
 </div>
+
+@if (!string.IsNullOrWhiteSpace(Model.PeriodLabel))
+{
+    <div class="small text-muted mb-3">ช่วงข้อมูล: <strong>@Model.PeriodLabel</strong></div>
+}
 
 <div class="row g-3 mb-4">
     <div class="col-md-4">
@@ -55,6 +73,7 @@
             <div class="report-value">@Model.PaidOrderCount.ToString("N0")</div>
         </div>
     </div>
+
     <div class="col-md-4">
         <div class="report-card p-4 h-100">
             <div class="report-label">ยอดเฉลี่ยต่อออเดอร์</div>
@@ -66,7 +85,7 @@
 <div class="row g-4">
     <div class="col-lg-7">
         <div class="report-card p-4 h-100">
-            <h2 class="h5 fw-bold mb-3">ยอดขายรายวัน</h2>
+            <h2 class="h5 fw-bold mb-3">ยอดขายแยกตามวัน</h2>
             @if (Model.DailySales.Any())
             {
                 <div class="table-responsive">
@@ -124,3 +143,14 @@
         </div>
     </div>
 </div>
+
+<script>
+    function toggleReportDateFields() {
+        const isCustom = document.getElementById("period").value === "custom";
+        document.getElementById("reportDateField").classList.toggle("d-none", isCustom);
+        document.getElementById("startDateField").classList.toggle("d-none", !isCustom);
+        document.getElementById("endDateField").classList.toggle("d-none", !isCustom);
+    }
+
+    toggleReportDateFields();
+</script>

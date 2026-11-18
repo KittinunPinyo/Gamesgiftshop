@@ -11,9 +11,15 @@
     }
 
     // ตรวจสอบสต็อก
-    bool inStock = Model.StockQuantity > 0;
     bool requiresClothingSize = ViewBag.RequiresClothingSize == true;
-    var clothingSizes = new[] { "S", "M", "L", "XL", "2XL" };
+    bool isFavorite = ViewBag.IsFavorite == true;
+    var clothingSizeStocks = ViewBag.SizeStocks as Dictionary<string, int> ?? new Dictionary<string, int>();
+    var availableStock = requiresClothingSize
+        ? clothingSizeStocks.Values.Sum()
+        : Model.StockQuantity ?? 0;
+    bool inStock = availableStock > 0;
+    var favoriteReturnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var clothingSizes = Gamesgiftshop.Models.ProductSizeStock.AvailableSizes;
     
     var imageUrls = new List<string>();
     if (!string.IsNullOrEmpty(Model.ImageUrl))
@@ -135,8 +141,12 @@
     .size-options {
         display: flex;
         flex-wrap: wrap;
-        gap: 12px;
+        gap: 10px;
         margin-top: 8px;
+    }
+
+    .size-option {
+        position: relative;
     }
 
     .size-option input {
@@ -150,34 +160,43 @@
 
     .size-option span {
         display: inline-flex;
-        min-width: 44px;
+        min-width: 46px;
         height: 42px;
         align-items: center;
         justify-content: center;
-        padding: 0 11px;
-        border: 1.5px solid #e34b5b;
-        border-radius: 11px;
-        background: linear-gradient(180deg, #fff 0%, #fff8f8 100%);
+        padding: 0 12px;
+        border: 1.5px solid #cbdcf0;
+        border-radius: 12px;
+        background: linear-gradient(180deg, #fff 0%, #f5f9ff 100%);
         color: #173a61;
         font-weight: 700;
         cursor: pointer;
-        box-shadow: 0 3px 8px rgba(30, 55, 90, .08);
+        box-shadow: 0 3px 9px rgba(29, 103, 214, .08);
         transition: background .18s ease, color .18s ease, border-color .18s ease,
             box-shadow .18s ease, transform .18s ease;
     }
 
     .size-option:hover span {
-        border-color: #cf3348;
-        background: #fff0f2;
-        box-shadow: 0 5px 12px rgba(227, 75, 91, .16);
+        border-color: #1d67d6;
+        background: #edf5ff;
+        box-shadow: 0 5px 13px rgba(29, 103, 214, .16);
         transform: translateY(-2px);
     }
 
+    .size-option input:disabled + span {
+        border-style: dashed;
+        background: #edf0f4;
+        color: #94a3b8;
+        cursor: not-allowed;
+        box-shadow: none;
+        text-decoration: line-through;
+    }
+
     .size-option input:checked + span {
-        border-color: #0b3473;
-        background: linear-gradient(145deg, #0b3473 0%, #1555a5 100%);
+        border-color: #1555b5;
+        background: linear-gradient(135deg, #2879e8 0%, #1555b5 100%);
         color: #fff;
-        box-shadow: 0 5px 13px rgba(11, 52, 115, .28), 0 0 0 3px rgba(29, 103, 214, .12);
+        box-shadow: 0 5px 13px rgba(29, 103, 214, .24), 0 0 0 3px rgba(29, 103, 214, .12);
     }
 
     .size-option:active span {
@@ -185,7 +204,7 @@
     }
 
     .size-option input:focus-visible + span {
-        outline: 3px solid rgba(29, 103, 214, .35);
+        outline: 3px solid rgba(29, 103, 214, .3);
         outline-offset: 2px;
     }
 
@@ -315,6 +334,11 @@
         border-color: #ef4444;
         color: #ef4444;
     }
+    .btn-wishlist.is-favorite {
+        background: #fff3f6;
+        border-color: #f3b4c5;
+        color: #e11d48;
+    }
 
     /* แท็บรายละเอียดด้านล่าง */
     .details-section {
@@ -390,7 +414,7 @@
                 <!-- สถานะสต็อก -->
                 @if (inStock)
                 {
-                    <div class="stock-status stock-in">✓ มีสินค้าพร้อมส่ง (@Model.StockQuantity ชิ้น)</div>
+                    <div class="stock-status stock-in">✓ มีสินค้าพร้อมส่ง (@availableStock ชิ้น)</div>
                 }
                 else
                 {
@@ -400,7 +424,9 @@
 
             <!-- ฟอร์มเพิ่มลงตะกร้า -->
             <form action="/Cart/Add" method="post">
+                @Html.AntiForgeryToken()
                 <input type="hidden" name="productId" value="@Model.ProductId">
+                <input type="hidden" name="returnUrl" value="@favoriteReturnUrl">
 
                 @if (TempData["CartError"] != null)
                 {
@@ -414,9 +440,10 @@
                         <div class="size-options" role="radiogroup" aria-label="Clothing sizes">
                             @foreach (var size in clothingSizes)
                             {
+                                var sizeStock = clothingSizeStocks.TryGetValue(size, out var savedStock) ? savedStock : 0;
                                 <label class="size-option">
-                                    <input type="radio" name="size" value="@size" required />
-                                    <span>@size</span>
+                                    <input type="radio" name="size" value="@size" data-stock="@sizeStock" required disabled="@(sizeStock <= 0)" />
+                                    <span>@size@if (sizeStock <= 0) { <small class="ms-1">หมด</small> }</span>
                                 </label>
                             }
                         </div>
@@ -426,7 +453,7 @@
                 <div class="mb-2 fw-bold" style="color: #cbd5e1; font-size: 0.95rem;">ระบุจำนวน</div>
                 <div class="qty-selector">
                     <button type="button" class="qty-btn" onclick="updateQty(-1)">-</button>
-                    <input type="text" id="qtyInput" name="quantity" class="qty-input" value="1" readonly>
+                    <input type="text" id="qtyInput" name="quantity" class="qty-input" value="1" max="@availableStock" readonly>
                     <button type="button" class="qty-btn" onclick="updateQty(1)">+</button>
                 </div>
 
@@ -435,18 +462,32 @@
                         <i class="fa-solid fa-cart-plus me-2"></i> @(inStock ? "หยิบใส่ตะกร้า" : "สินค้าหมด")
                     </button>
                     
-                    <button type="button" class="btn-wishlist" title="เพิ่มในรายการโปรด">
-                        🤍
-                    </button>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <button type="submit"
+                                class="btn-wishlist @(isFavorite ? "is-favorite" : "")"
+                                title="@(isFavorite ? "นำออกจากสินค้าที่ชอบ" : "เพิ่มในสินค้าที่ชอบ")"
+                                aria-label="@(isFavorite ? "นำออกจากสินค้าที่ชอบ" : "เพิ่มในสินค้าที่ชอบ")"
+                                aria-pressed="@isFavorite"
+                                formaction="@Url.Action("ToggleFavorite", "Account")"
+                                formnovalidate>
+                            <i class="fa-heart @(isFavorite ? "fa-solid" : "fa-regular")"></i>
+                        </button>
+                    }
+                    else
+                    {
+                        <a href="/Account/Login" class="btn-wishlist" title="เข้าสู่ระบบเพื่อบันทึกสินค้าที่ชอบ" aria-label="เข้าสู่ระบบเพื่อบันทึกสินค้าที่ชอบ">
+                            <i class="fa-regular fa-heart"></i>
+                        </a>
+                    }
                 </div>
             </form>
             
             <!-- ข้อมูลลิขสิทธิ์ -->
             <div class="mt-4 p-3"
                  style="background: #edf5ff; border: 1px dashed #b6d2f2; border-radius: 12px;">
-                <div class="d-flex align-items-center gap-2"
-                     style="color: #1d67d6; font-weight: 700; font-size: 0.9rem;">
-                    <span>🛡️</span> สินค้าลิขสิทธิ์แท้ 100% รับประกันการคืนเงินภายใน 7 วัน
+                <div style="color: #1d67d6; font-weight: 700; font-size: 0.9rem;">
+                    สินค้าลิขสิทธิ์แท้ 100% รับประกันการคืนเงินภายใน 7 วัน
                 </div>
             </div>
 
@@ -485,7 +526,7 @@
     function updateQty(change) {
         const input = document.getElementById('qtyInput');
         let currentQty = parseInt(input.value);
-        let maxStock = parseInt('@Model.StockQuantity');
+        let maxStock = parseInt(input.max);
         
         let newQty = currentQty + change;
         
@@ -494,4 +535,13 @@
             input.value = newQty;
         }
     }
+
+    document.querySelectorAll('input[name="size"]').forEach(function(sizeInput) {
+        sizeInput.addEventListener('change', function() {
+            const quantityInput = document.getElementById('qtyInput');
+            const maxStock = parseInt(this.dataset.stock, 10);
+            quantityInput.max = maxStock;
+            quantityInput.value = Math.min(parseInt(quantityInput.value, 10) || 1, maxStock);
+        });
+    });
 </script>

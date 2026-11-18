@@ -34,4 +34,6 @@ public partial class Product
     public string? WarrantyInfo { get; set; }
 
     public virtual ICollection<Orderdetail> Orderdetails { get; set; } = new List<Orderdetail>();
+
+    public virtual ICollection<ProductSizeStock> SizeStocks { get; set; } = new List<ProductSizeStock>();
 }

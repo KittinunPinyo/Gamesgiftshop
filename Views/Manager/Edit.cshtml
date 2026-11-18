@@ -13,6 +13,7 @@
     {
         imageUrls.Add("");
     }
+    var sizeStocks = ViewBag.SizeStocks as Dictionary<string, int> ?? new Dictionary<string, int>();
 }
 
 <style>
@@ -53,7 +54,7 @@
                     }
                     <option value="NEW" style="color: #4a3b8c; font-weight: bold;">+ เพิ่มหมวดหมู่ใหม่เอง...</option>
                 </select>
-                <input type="text" asp-for="Category" id="categoryInput" class="form-control mt-2" placeholder="ระบุชื่อหมวดหมู่ที่ต้องการ..." style="display: none;" required>
+                <input type="text" asp-for="Category" id="categoryInput" class="form-control mt-2" placeholder="ระบุชื่อหมวดหมู่ที่ต้องการ..." style="display: none;" oninput="updateStockFields()" required>
             </div>
 
             <div class="row">
@@ -113,10 +114,23 @@
                 </button>
             </div>
 
-            <div class="row">
+            <div class="row" id="standard-stock-field">
                 <div class="col-md-6 mb-3">
                     <label asp-for="StockQuantity" class="form-label fw-bold">จำนวนสินค้าในสต๊อก</label>
-                    <input asp-for="StockQuantity" type="number" class="form-control" />
+                    <input asp-for="StockQuantity" type="number" class="form-control" min="0" />
+                </div>
+            </div>
+            <div class="mb-3" id="clothing-stock-fields" style="display: none;">
+                <label class="form-label fw-bold">จำนวนสต็อกแยกตามไซซ์</label>
+                <div class="row">
+                    @foreach (var size in Gamesgiftshop.Models.ProductSizeStock.AvailableSizes)
+                    {
+                        var stockValue = sizeStocks.TryGetValue(size, out var value) ? value : 0;
+                        <div class="col-6 col-md-4 mb-2">
+                            <label class="form-label" for="stock-@size">ไซซ์ @size</label>
+                            <input id="stock-@size" name="sizeStocks[@size]" type="number" min="0" class="form-control" value="@stockValue" required />
+                        </div>
+                    }
                 </div>
             </div>
 
@@ -139,6 +153,19 @@
             input.style.display = "none";
             input.value = dropdown.value; 
         }
+        updateStockFields();
+    }
+
+    function updateStockFields() {
+        var isClothing = document.getElementById("categoryInput").value.trim() === "เสื้อผ้า";
+        var standardField = document.getElementById("standard-stock-field");
+        var clothingFields = document.getElementById("clothing-stock-fields");
+        standardField.style.display = isClothing ? "none" : "";
+        standardField.querySelector("input").disabled = isClothing;
+        clothingFields.style.display = isClothing ? "" : "none";
+        clothingFields.querySelectorAll("input").forEach(function(input) {
+            input.disabled = !isClothing;
+        });
     }
     document.addEventListener("DOMContentLoaded", function() {
         var dropdown = document.getElementById("categoryDropdown");
@@ -158,6 +185,7 @@
             dropdown.value = "NEW";
             input.style.display = "block";
         }
+        updateStockFields();
     });
 
     let imageCount = @imageUrls.Count;

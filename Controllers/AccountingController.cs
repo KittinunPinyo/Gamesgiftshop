@@ -48,6 +48,8 @@ public class AccountingController : Controller
             .OrderByDescending(expense => expense.ExpenseDate)
             .ThenByDescending(expense => expense.AccountingExpenseId)
             .ToList();
+        ViewBag.PendingPaymentCount = _db.Orders.AsNoTracking()
+            .Count(order => order.Status == "รอตรวจสอบสลิป" || order.Status == "รอดำเนินการ");
         var revenue = sales.Sum(order => order.TotalAmount);
         var expenseTotal = expenses.Sum(expense => expense.Amount);
 
@@ -61,6 +63,63 @@ public class AccountingController : Controller
             SalesTransactions = sales,
             Expenses = expenses
         });
+    }
+
+    [HttpGet]
+    public IActionResult Payments()
+    {
+        var orders = _db.Orders
+            .AsNoTracking()
+            .Include(order => order.Orderdetails)
+                .ThenInclude(detail => detail.Product)
+            .Where(order => order.Status == "รอตรวจสอบสลิป" || order.Status == "รอดำเนินการ")
+            .OrderBy(order => order.OrderDate)
+            .ToList();
+        var userIds = orders.Select(order => order.UserId).Distinct().ToList();
+        var usernames = _db.Users
+            .AsNoTracking()
+            .Where(user => userIds.Contains(user.UserId))
+            .ToDictionary(user => user.UserId, user => user.Username);
+
+        return View(new AccountingPaymentViewModel
+        {
+            Orders = orders.Select(order => new AccountingPaymentOrder
+            {
+                OrderId = order.OrderId,
+                OrderDate = order.OrderDate,
+                CustomerName = usernames.GetValueOrDefault(order.UserId, "ไม่ทราบ"),
+                TotalAmount = order.TotalAmount,
+                Status = order.Status,
+                PaymentSlipUrl = order.PaymentSlipUrl,
+                ProductSummary = order.Orderdetails
+                    .Select(detail => $"{detail.Product?.Name ?? $"สินค้า #{detail.ProductId}"}{(string.IsNullOrWhiteSpace(detail.Size) ? "" : $" (ไซซ์ {detail.Size})")} × {detail.Quantity}")
+                    .ToList()
+            }).ToList()
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult ReviewPayment(int orderId, bool approved)
+    {
+        var newStatus = approved ? "ชำระเงินสำเร็จแล้ว" : "ชำระเงินไม่ผ่าน";
+        var updated = _db.Orders
+            .Where(order => order.OrderId == orderId &&
+                (order.Status == "รอตรวจสอบสลิป" || order.Status == "รอดำเนินการ") &&
+                order.PaymentSlipUrl != null &&
+                order.PaymentSlipUrl != "")
+            .ExecuteUpdate(updates => updates.SetProperty(order => order.Status, newStatus));
+
+        if (updated == 0)
+        {
+            TempData["PaymentReviewError"] = "ไม่พบออเดอร์ที่รอตรวจสอบพร้อมสลิป หรือออเดอร์นี้ถูกตรวจสอบไปแล้ว";
+            return RedirectToAction(nameof(Payments));
+        }
+
+        TempData["PaymentReviewSuccess"] = approved
+            ? $"ยืนยันการชำระเงินของออเดอร์ #{orderId} แล้ว"
+            : $"ปฏิเสธสลิปของออเดอร์ #{orderId} แล้ว ลูกค้าจะเห็นสถานะและติดต่อร้านค้าได้";
+        return RedirectToAction(nameof(Payments));
     }
 
     [HttpPost]

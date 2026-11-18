@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using Gamesgiftshop.Models;
 
@@ -51,6 +52,7 @@ namespace Gamesgiftshop.Controllers
                                     .Where(c => !string.IsNullOrEmpty(c))
                                     .Distinct()
                                     .ToList();
+            ViewBag.FavoriteProductIds = GetFavoriteProductIds();
 
             // ส่งข้อมูลสินค้าที่กรองเสร็จแล้วไปแสดงที่หน้าเว็บ
             return View(products.ToList());
@@ -66,8 +68,53 @@ namespace Gamesgiftshop.Controllers
             {
                 return NotFound();
             }
-            ViewBag.RequiresClothingSize = string.Equals(product.Category, "เสื้อผ้า", StringComparison.OrdinalIgnoreCase);
+            var requiresClothingSize = string.Equals(product.Category, "เสื้อผ้า", StringComparison.OrdinalIgnoreCase);
+            ViewBag.RequiresClothingSize = requiresClothingSize;
+            if (requiresClothingSize)
+            {
+                var sizeStocks = ProductSizeStock.AvailableSizes.ToDictionary(size => size, _ => 0);
+                var savedSizeStocks = _db.ProductSizeStocks
+                    .AsNoTracking()
+                    .Where(stock => stock.ProductId == product.ProductId)
+                    .ToList();
+                foreach (var stock in savedSizeStocks)
+                {
+                    if (sizeStocks.ContainsKey(stock.Size))
+                        sizeStocks[stock.Size] = stock.StockQuantity;
+                }
+
+                if (savedSizeStocks.Count == 0 && (product.StockQuantity ?? 0) > 0)
+                    sizeStocks["L"] = product.StockQuantity ?? 0;
+
+                ViewBag.SizeStocks = sizeStocks;
+            }
+            var userId = GetCurrentUserId();
+            ViewBag.IsFavorite = userId.HasValue && _db.UserFavorites
+                .AsNoTracking()
+                .Any(favorite => favorite.UserId == userId.Value && favorite.ProductId == product.ProductId);
             return View(product);
+        }
+
+        private int? GetCurrentUserId()
+        {
+            var username = User.Identity?.IsAuthenticated == true ? User.Identity.Name : null;
+            if (string.IsNullOrWhiteSpace(username)) return null;
+
+            return _db.Users.AsNoTracking()
+                .Where(user => user.Username == username)
+                .Select(user => (int?)user.UserId)
+                .FirstOrDefault();
+        }
+
+        private HashSet<int> GetFavoriteProductIds()
+        {
+            var userId = GetCurrentUserId();
+            return userId.HasValue
+                ? _db.UserFavorites.AsNoTracking()
+                    .Where(favorite => favorite.UserId == userId.Value)
+                    .Select(favorite => favorite.ProductId)
+                    .ToHashSet()
+                : new HashSet<int>();
         }
     }
 }

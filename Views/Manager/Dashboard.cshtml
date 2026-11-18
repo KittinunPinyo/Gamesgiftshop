@@ -4,7 +4,9 @@
     ViewData["Title"] = "จัดการบิลคำสั่งซื้อ";
     var users = ViewBag.Users as List<Gamesgiftshop.Models.User>;
     var orders = Model?.ToList() ?? new List<Gamesgiftshop.Models.Order>();
-    var ordersAwaitingReview = orders.Count(order => order.Status == "รอตรวจสอบสลิป");
+    var ordersBeingFulfilled = orders.Count(order =>
+        order.Status == "ชำระเงินสำเร็จแล้ว" ||
+        order.Status == "เตรียมจัดส่ง");
     var orderValue = orders.Sum(order => order.TotalAmount);
 }
 
@@ -13,8 +15,6 @@
     .table-admin { width: 100%; border-collapse: collapse; }
     .table-admin th { background: #f7fafc; padding: 15px; text-align: center; border-bottom: 2px solid #e2e8f0; }
     .table-admin td { padding: 15px; text-align: center; border-bottom: 1px solid #edf2f7; vertical-align: middle; }
-    .btn-update { background: #4a3b8c; color: white; border: none; border-radius: 6px; padding: 6px 15px; font-weight: bold; }
-    .btn-view-slip { background: #ebf4ff; color: #3182ce; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; border: 1px solid #bee3f8;}
 </style>
 
 <div class="container-fluid mt-2">
@@ -23,7 +23,7 @@
         <div>
             <div class="manager-eyebrow">ORDER MANAGEMENT</div>
             <h1>จัดการบิลคำสั่งซื้อ</h1>
-            <p>ตรวจสอบรายการสั่งซื้อ สลิปชำระเงิน และอัปเดตสถานะได้จากหน้านี้</p>
+            <p>ติดตามรายการคำสั่งซื้อและสถานะการจัดส่ง การตรวจสอบชำระเงินดำเนินการโดยฝ่ายบัญชี</p>
         </div>
     </div>
 
@@ -41,8 +41,8 @@
             <div class="manager-stat-card">
                 <div class="manager-stat-icon"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i></div>
                 <div>
-                    <div class="manager-stat-label">รอตรวจสอบสลิป</div>
-                    <div class="manager-stat-value">@ordersAwaitingReview.ToString("N0")</div>
+                    <div class="manager-stat-label">อยู่ระหว่างจัดเตรียม/จัดส่ง</div>
+                    <div class="manager-stat-value">@ordersBeingFulfilled.ToString("N0")</div>
                 </div>
             </div>
         </div>
@@ -70,9 +70,7 @@
                             <th>วันที่สั่งซื้อ</th>
                             <th>ลูกค้า</th>
                             <th>ยอดสุทธิ</th>
-                            <th>สถานะ</th>
-                            <th>สลิป</th>
-                            <th>อัปเดตสถานะ</th>
+                            <th>สถานะออเดอร์</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -85,23 +83,6 @@
                                 <td>@customerName</td>
                                 <td style="color: #38a169; font-weight: bold;">฿@order.TotalAmount</td>
                                 <td><span style="background: #f0ebf8; color: #4a3b8c; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem;">@order.Status</span></td>
-                                <td>
-                                    @if (!string.IsNullOrEmpty(order.PaymentSlipUrl))
-                                    {
-                                        <a href="@order.PaymentSlipUrl" target="_blank" class="btn-view-slip">ดูสลิป</a>
-                                    }
-                                    else { <span class="text-muted" style="font-size: 0.8rem;">ไม่มีสลิป</span> }
-                                </td>
-                                <td>
-                                    <form method="post" action="/Manager/UpdateOrderStatus" class="d-flex justify-content-center gap-2">
-                                        <input type="hidden" name="orderId" value="@order.OrderId" />
-                                        <select name="newStatus" class="form-select form-select-sm" style="width: auto;">
-                                            <option value="รอตรวจสอบสลิป" selected="@(order.Status == "รอตรวจสอบสลิป")">รอตรวจสอบสลิป</option>
-                                            <option value="ชำระเงินสำเร็จแล้ว" selected="@(order.Status == "ชำระเงินสำเร็จแล้ว")">ชำระเงินสำเร็จแล้ว</option>
-                                        </select>
-                                        <button type="submit" class="btn-update">บันทึก</button>
-                                    </form>
-                                </td>
                             </tr>
                         }
                     </tbody>

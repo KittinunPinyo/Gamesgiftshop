@@ -1,3 +1,6 @@
+@{
+    var currentAction = ViewContext.RouteData.Values["Action"]?.ToString() ?? string.Empty;
+}
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -33,7 +36,8 @@
             {
                 <li><a asp-controller="Admin" asp-action="Dashboard"><i class="fa-solid fa-shield-halved"></i><span>Admin Console</span></a></li>
             }
-            <li><a asp-controller="Accounting" asp-action="Dashboard" class="active"><i class="fa-solid fa-chart-line"></i><span>บัญชีรายรับรายจ่าย</span></a></li>
+            <li><a asp-controller="Accounting" asp-action="Dashboard" class="@(currentAction == "Dashboard" ? "active" : "")"><i class="fa-solid fa-chart-line"></i><span>บัญชีรายรับรายจ่าย</span></a></li>
+            <li><a asp-controller="Accounting" asp-action="Payments" class="@(currentAction == "Payments" ? "active" : "")"><i class="fa-solid fa-money-check-dollar"></i><span>ตรวจสอบการชำระเงิน</span></a></li>
         </ul>
         <ul class="accounting-menu flex-grow-0 border-top border-light border-opacity-25">
             <li><a asp-controller="Account" asp-action="Logout"><i class="fa-solid fa-right-from-bracket"></i><span>ออกจากระบบ</span></a></li>

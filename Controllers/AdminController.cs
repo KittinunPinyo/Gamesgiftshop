@@ -38,7 +38,8 @@ public class AdminController : Controller
             AdminCount = CountRole("Admin"),
             ProductCount = _db.Products.AsNoTracking().Count(),
             TotalOrders = _db.Orders.AsNoTracking().Count(),
-            AwaitingReviewOrders = _db.Orders.AsNoTracking().Count(order => order.Status == "รอตรวจสอบสลิป"),
+            AwaitingReviewOrders = _db.Orders.AsNoTracking().Count(order =>
+                order.Status == "รอตรวจสอบสลิป" || order.Status == "รอดำเนินการ"),
             ReadyToPackOrders = _db.Orders.AsNoTracking().Count(order => order.Status == "ชำระเงินสำเร็จแล้ว"),
             PreparingShipmentOrders = _db.Orders.AsNoTracking().Count(order => order.Status == "เตรียมจัดส่ง"),
             ShippedOrders = _db.Orders.AsNoTracking().Count(order => order.Status == "จัดส่งแล้ว"),

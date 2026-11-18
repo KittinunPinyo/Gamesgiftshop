@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -45,7 +46,7 @@ namespace Gamesgiftshop.Controllers
         private const string PromoSessionSuffix = "_PromoCode";
         private const string LoyaltySessionSuffix = "_LoyaltyPoints";
         private const string PromoMessageSessionKey = "PromoMessage";
-        private static readonly string[] ClothingSizes = ["S", "M", "L", "XL", "2XL"];
+        private static readonly string[] ClothingSizes = ProductSizeStock.AvailableSizes;
 
         public CartController(Csi402dbContext db)
         {
@@ -204,6 +205,7 @@ namespace Gamesgiftshop.Controllers
         private static bool IsCancelledOrder(string? status)
         {
             return status == "ยกเลิก" || status == "ยกเลิกแล้ว" ||
+                   status == "ชำระเงินไม่ผ่าน" ||
                    string.Equals(status, "Cancelled", StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(status, "Canceled", StringComparison.OrdinalIgnoreCase);
         }
@@ -340,10 +342,13 @@ namespace Gamesgiftshop.Controllers
 
             if (requiresSize)
             {
-                var totalProductQuantity = cart.Where(item => item.ProductId == productId).Sum(item => item.Quantity);
-                if (totalProductQuantity + quantity > (product.StockQuantity ?? 0))
+                var currentSizeQuantity = cart
+                    .Where(item => item.ProductId == productId && item.Size == size)
+                    .Sum(item => (long)item.Quantity);
+                var availableSizeStock = GetClothingSizeStock(product, size!);
+                if (currentSizeQuantity + quantity > availableSizeStock)
                 {
-                    TempData["CartError"] = "จำนวนสินค้าที่เลือกเกินสต็อกที่มี";
+                    TempData["CartError"] = $"ไซซ์ {size} มีสินค้าไม่เพียงพอ";
                     return RedirectToAction("Details", "Product", new { id = productId });
                 }
             }
@@ -383,12 +388,12 @@ namespace Gamesgiftshop.Controllers
                 var product = _db.Products.FirstOrDefault(p => p.ProductId == productId);
                 if (string.Equals(item.Category, "เสื้อผ้า", StringComparison.OrdinalIgnoreCase) && quantity > item.Quantity)
                 {
-                    var otherSizesQuantity = cart
-                        .Where(cartItem => cartItem.ProductId == productId && cartItem != item)
-                        .Sum(cartItem => cartItem.Quantity);
-                    if (quantity + otherSizesQuantity > (product?.StockQuantity ?? 0))
+                    var availableSizeStock = product == null || string.IsNullOrWhiteSpace(item.Size)
+                        ? 0
+                        : GetClothingSizeStock(product, item.Size);
+                    if (quantity > availableSizeStock)
                     {
-                        TempData["CartError"] = "จำนวนสินค้ารวมเกินสต็อกที่มี";
+                        TempData["CartError"] = $"ไซซ์ {item.Size} มีสินค้าไม่เพียงพอ";
                         return RedirectToAction(nameof(Index));
                     }
                 }
@@ -398,6 +403,24 @@ namespace Gamesgiftshop.Controllers
             }
             SaveCartItems(cart);
             return RedirectToAction("Index");
+        }
+
+        private int GetClothingSizeStock(Product product, string size)
+        {
+            var sizeStock = _db.ProductSizeStocks
+                .AsNoTracking()
+                .Where(stock => stock.ProductId == product.ProductId && stock.Size == size)
+                .Select(stock => (int?)stock.StockQuantity)
+                .FirstOrDefault();
+            if (sizeStock.HasValue)
+                return Math.Max(0, sizeStock.Value);
+
+            var hasSizeStocks = _db.ProductSizeStocks
+                .AsNoTracking()
+                .Any(stock => stock.ProductId == product.ProductId);
+            return !hasSizeStocks && size == "L"
+                ? Math.Max(0, product.StockQuantity ?? 0)
+                : 0;
         }
 
         // ==========================================
@@ -439,9 +462,49 @@ namespace Gamesgiftshop.Controllers
             if (User.Identity == null || !User.Identity.IsAuthenticated)
                 return RedirectToAction("Login", "Account");
 
+            if (paymentSlip == null || paymentSlip.Length == 0)
+            {
+                TempData["CheckoutError"] = "กรุณาแนบสลิปก่อนยืนยันคำสั่งซื้อ";
+                return RedirectToAction(nameof(Checkout));
+            }
+
             var cartVM = BuildCartViewModel();
             var cartItems = cartVM.Items;
             if (!cartItems.Any()) return RedirectToAction("Index");
+
+            var requestedStock = cartItems
+                .GroupBy(item => new { item.ProductId, item.Size })
+                .Select(group => new
+                {
+                    group.Key.ProductId,
+                    group.Key.Size,
+                    Quantity = group.Sum(item => (long)item.Quantity)
+                });
+            foreach (var requested in requestedStock)
+            {
+                var product = _db.Products
+                    .AsNoTracking()
+                    .FirstOrDefault(item => item.ProductId == requested.ProductId);
+                if (product == null || requested.Quantity <= 0)
+                {
+                    TempData["CheckoutError"] = "พบสินค้าในตะกร้าที่ไม่ถูกต้อง กรุณาตรวจสอบตะกร้าอีกครั้ง";
+                    return RedirectToAction(nameof(Checkout));
+                }
+
+                var isClothing = string.Equals(product.Category, "เสื้อผ้า", StringComparison.OrdinalIgnoreCase);
+                var availableStock = isClothing
+                    ? requested.Size != null && ClothingSizes.Contains(requested.Size)
+                        ? GetClothingSizeStock(product, requested.Size)
+                        : 0
+                    : Math.Max(0, product.StockQuantity ?? 0);
+                if (requested.Quantity > availableStock)
+                {
+                    TempData["CheckoutError"] = isClothing
+                        ? $"ไซซ์ {requested.Size ?? "ที่เลือก"} ของ {product.Name} มีสินค้าไม่เพียงพอ"
+                        : $"สินค้า {product.Name} มีสินค้าไม่เพียงพอ";
+                    return RedirectToAction(nameof(Checkout));
+                }
+            }
 
             // ดึงข้อมูล User ปัจจุบัน
             var currentUsername = User.Identity.Name;
@@ -484,7 +547,7 @@ namespace Gamesgiftshop.Controllers
                 TotalAmount = totalAmount,
                 LoyaltyPointsRedeemed = cartVM.LoyaltyPointsRedeemed,
                 AppliedPromoCode = cartVM.PromoCode,
-                Status = "รอดำเนินการ", // สถานะเริ่มต้น
+                Status = "รอตรวจสอบสลิป",
                 PaymentSlipUrl = slipPath,
                 ShippingAddress = string.IsNullOrEmpty(address) ? "ไม่ระบุที่อยู่" : address
             };

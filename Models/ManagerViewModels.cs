@@ -2,6 +2,12 @@ namespace Gamesgiftshop.Models;
 
 public class SalesReportViewModel
 {
+    public string Period { get; set; } = "custom";
+
+    public DateTime ReportDate { get; set; }
+
+    public string PeriodLabel { get; set; } = "";
+
     public DateTime StartDate { get; set; }
 
     public DateTime EndDate { get; set; }

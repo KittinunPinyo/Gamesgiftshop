@@ -85,11 +85,41 @@
                             <div class="fw-semibold">@product.Name</div>
                             <div class="small text-muted">รหัสสินค้า #@product.ProductId</div>
                         </td>
-                        <td><span class="badge text-bg-secondary">@(product.StockQuantity ?? 0) ชิ้น</span></td>
                         <td>
-                            <form asp-action="AddInventory" method="post" class="d-flex gap-2">
+                            @if (string.Equals(product.Category, "เสื้อผ้า", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <div class="d-flex flex-wrap gap-1 mb-1">
+                                    @foreach (var size in Gamesgiftshop.Models.ProductSizeStock.AvailableSizes)
+                                    {
+                                        var sizeStock = product.SizeStocks.FirstOrDefault(stock => stock.Size == size)?.StockQuantity ?? 0;
+                                        if (product.SizeStocks.Count == 0 && size == "L")
+                                        {
+                                            sizeStock = Math.Max(0, product.StockQuantity ?? 0);
+                                        }
+                                        <span class="badge text-bg-light border">@size: @sizeStock</span>
+                                    }
+                                </div>
+                                <span class="small text-muted">รวม @(product.StockQuantity ?? 0) ชิ้น</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-secondary">@(product.StockQuantity ?? 0) ชิ้น</span>
+                            }
+                        </td>
+                        <td>
+                        <form asp-action="AddInventory" method="post" class="d-flex gap-2">
                                 <input type="hidden" name="productId" value="@product.ProductId" />
                                 <input type="hidden" name="search" value="@ViewBag.Search" />
+                            @if (string.Equals(product.Category, "เสื้อผ้า", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <label class="visually-hidden" for="size-@product.ProductId">ไซซ์ที่รับเข้า</label>
+                                <select class="form-select" id="size-@product.ProductId" name="size" required>
+                                    @foreach (var size in Gamesgiftshop.Models.ProductSizeStock.AvailableSizes)
+                                    {
+                                        <option value="@size">@size</option>
+                                    }
+                                </select>
+                            }
                                 <label class="visually-hidden" for="quantity-@product.ProductId">จำนวนที่รับเข้า</label>
                                 <input class="form-control" type="number" id="quantity-@product.ProductId" name="quantity" min="1" required placeholder="จำนวน" />
                                 <button type="submit" class="btn btn-success text-nowrap"><i class="fa-solid fa-plus me-1"></i>เพิ่มสต็อก</button>

@@ -150,6 +150,13 @@ namespace Gamesgiftshop.Controllers
                 ViewBag.User = currentUser;
                 ViewBag.Phone = currentUser.Phone;
                 ViewBag.Addresses = _db.Useraddresses.Where(a => a.UserId == currentUser.UserId).ToList();
+                ViewBag.FavoriteProducts = _db.UserFavorites
+                    .AsNoTracking()
+                    .Where(favorite => favorite.UserId == currentUser.UserId)
+                    .Include(favorite => favorite.Product)
+                    .OrderByDescending(favorite => favorite.CreatedAt)
+                    .Select(favorite => favorite.Product)
+                    .ToList();
                 
                 // ⭐️ ดึงข้อมูลประวัติคำสั่งซื้อ พร้อม Include รายละเอียดสินค้าและชื่อสินค้า ⭐️
                 myOrders = _db.Orders
@@ -167,6 +174,42 @@ namespace Gamesgiftshop.Controllers
             }
 
             return View(myOrders);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ToggleFavorite(int productId, string? returnUrl)
+        {
+            var userId = _db.Users
+                .AsNoTracking()
+                .Where(user => user.Username == User.Identity!.Name)
+                .Select(user => (int?)user.UserId)
+                .FirstOrDefault();
+            if (!userId.HasValue) return Forbid();
+            if (!_db.Products.AsNoTracking().Any(product => product.ProductId == productId))
+                return NotFound();
+
+            var favorite = _db.UserFavorites.Find(userId.Value, productId);
+            if (favorite == null)
+            {
+                _db.UserFavorites.Add(new UserFavorite
+                {
+                    UserId = userId.Value,
+                    ProductId = productId,
+                    CreatedAt = DateTime.Now
+                });
+            }
+            else
+            {
+                _db.UserFavorites.Remove(favorite);
+            }
+
+            _db.SaveChanges();
+            if (Url.IsLocalUrl(returnUrl))
+                return LocalRedirect(returnUrl!);
+
+            return RedirectToAction(nameof(Profile));
         }
 
         [Authorize]
@@ -196,6 +239,7 @@ namespace Gamesgiftshop.Controllers
         private static bool IsCancelledOrder(string? status)
         {
             return status == "ยกเลิก" || status == "ยกเลิกแล้ว" ||
+                   status == "ชำระเงินไม่ผ่าน" ||
                    string.Equals(status, "Cancelled", System.StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(status, "Canceled", System.StringComparison.OrdinalIgnoreCase);
         }

@@ -24,9 +24,13 @@ public partial class Csi402dbContext : DbContext
 
     public virtual DbSet<Product> Products { get; set; }
 
+    public virtual DbSet<ProductSizeStock> ProductSizeStocks { get; set; }
+
     public virtual DbSet<User> Users { get; set; }
 
     public virtual DbSet<UserNotification> UserNotifications { get; set; }
+
+    public virtual DbSet<UserFavorite> UserFavorites { get; set; }
 
     public virtual DbSet<AccountingExpense> AccountingExpenses { get; set; }
 
@@ -127,6 +131,16 @@ public partial class Csi402dbContext : DbContext
             entity.Property(e => e.StockQuantity).HasDefaultValueSql("'0'");
         });
 
+        modelBuilder.Entity<ProductSizeStock>(entity =>
+        {
+            entity.HasKey(e => new { e.ProductId, e.Size });
+            entity.ToTable("productsizestocks");
+            entity.Property(e => e.Size).HasMaxLength(10);
+            entity.HasOne(e => e.Product).WithMany(e => e.SizeStocks)
+                .HasForeignKey(e => e.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasKey(e => e.UserId).HasName("PRIMARY");
@@ -161,6 +175,25 @@ public partial class Csi402dbContext : DbContext
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("usernotifications_ibfk_1");
+        });
+
+        modelBuilder.Entity<UserFavorite>(entity =>
+        {
+            entity.HasKey(e => new { e.UserId, e.ProductId });
+            entity.ToTable("userfavorites");
+            entity.Property(e => e.UserId).HasColumnName("UserID");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("datetime");
+            entity.HasIndex(e => e.ProductId);
+            entity.HasOne(e => e.User).WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("userfavorites_ibfk_1");
+            entity.HasOne(e => e.Product).WithMany()
+                .HasForeignKey(e => e.ProductId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("userfavorites_ibfk_2");
         });
 
         modelBuilder.Entity<AccountingExpense>(entity =>

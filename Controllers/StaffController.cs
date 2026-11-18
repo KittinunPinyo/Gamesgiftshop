@@ -46,8 +46,13 @@ public class StaffController : Controller
         var requestedItems = _db.Orderdetails
             .AsNoTracking()
             .Where(detail => detail.OrderId == orderId)
-            .GroupBy(detail => detail.ProductId)
-            .Select(group => new { ProductId = group.Key, Quantity = group.Sum(detail => detail.Quantity) })
+            .GroupBy(detail => new { detail.ProductId, detail.Size })
+            .Select(group => new
+            {
+                group.Key.ProductId,
+                group.Key.Size,
+                Quantity = group.Sum(detail => detail.Quantity)
+            })
             .ToList();
         if (requestedItems.Count == 0)
         {
@@ -71,11 +76,49 @@ public class StaffController : Controller
 
         foreach (var item in requestedItems)
         {
-            var changed = _db.Products
-                .Where(product => product.ProductId == item.ProductId && product.StockQuantity >= item.Quantity)
-                .ExecuteUpdate(updates => updates.SetProperty(
-                    product => product.StockQuantity,
-                    product => (int?)((product.StockQuantity ?? 0) - item.Quantity)));
+            var category = _db.Products
+                .AsNoTracking()
+                .Where(product => product.ProductId == item.ProductId)
+                .Select(product => product.Category)
+                .FirstOrDefault();
+            var isClothing = string.Equals(category, "เสื้อผ้า", StringComparison.OrdinalIgnoreCase);
+            int changed;
+
+            if (isClothing)
+            {
+                var size = item.Size?.Trim().ToUpperInvariant();
+                if (size == null || !ProductSizeStock.AvailableSizes.Contains(size))
+                {
+                    changed = 0;
+                }
+                else
+                {
+                    changed = _db.ProductSizeStocks
+                        .Where(stock => stock.ProductId == item.ProductId &&
+                            stock.Size == size && stock.StockQuantity >= item.Quantity)
+                        .ExecuteUpdate(updates => updates.SetProperty(
+                            stock => stock.StockQuantity,
+                            stock => stock.StockQuantity - item.Quantity));
+
+                    if (changed > 0)
+                    {
+                        changed = _db.Products
+                            .Where(product => product.ProductId == item.ProductId &&
+                                product.StockQuantity >= item.Quantity)
+                            .ExecuteUpdate(updates => updates.SetProperty(
+                                product => product.StockQuantity,
+                                product => (int?)((product.StockQuantity ?? 0) - item.Quantity)));
+                    }
+                }
+            }
+            else
+            {
+                changed = _db.Products
+                    .Where(product => product.ProductId == item.ProductId && product.StockQuantity >= item.Quantity)
+                    .ExecuteUpdate(updates => updates.SetProperty(
+                        product => product.StockQuantity,
+                        product => (int?)((product.StockQuantity ?? 0) - item.Quantity)));
+            }
 
             if (changed == 0)
             {
@@ -144,7 +187,9 @@ public class StaffController : Controller
     [HttpGet]
     public IActionResult Inventory(string? search)
     {
-        var products = _db.Products.AsNoTracking();
+        IQueryable<Product> products = _db.Products
+            .AsNoTracking()
+            .Include(product => product.SizeStocks);
         var normalizedSearch = search?.Trim();
         if (!string.IsNullOrEmpty(normalizedSearch))
             products = products.Where(product => product.Name.Contains(normalizedSearch));
@@ -155,10 +200,51 @@ public class StaffController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult AddInventory(int productId, int quantity, string? search)
+    public IActionResult AddInventory(int productId, int quantity, string? size, string? search)
     {
         var product = _db.Products.FirstOrDefault(item => item.ProductId == productId);
         if (product == null) return NotFound();
+
+        if (string.Equals(product.Category, "เสื้อผ้า", StringComparison.OrdinalIgnoreCase))
+        {
+            size = size?.Trim().ToUpperInvariant();
+            if (size == null || !ProductSizeStock.AvailableSizes.Contains(size))
+            {
+                TempData["InventoryError"] = "กรุณาเลือกไซซ์ที่ต้องการรับเข้าสต็อก";
+                return RedirectToAction(nameof(Inventory), new { search });
+            }
+
+            var sizeStock = _db.ProductSizeStocks
+                .FirstOrDefault(stock => stock.ProductId == productId && stock.Size == size);
+            var currentSizeStock = Math.Max(0, sizeStock?.StockQuantity ?? 0);
+            var currentTotalStock = Math.Max(0, product.StockQuantity ?? 0);
+            if (quantity <= 0 ||
+                quantity > int.MaxValue - currentSizeStock ||
+                quantity > int.MaxValue - currentTotalStock)
+            {
+                TempData["InventoryError"] = "จำนวนสินค้าที่รับเข้าต้องมากกว่า 0 และไม่เกินขีดจำกัดสต็อก";
+                return RedirectToAction(nameof(Inventory), new { search });
+            }
+
+            if (sizeStock == null)
+            {
+                _db.ProductSizeStocks.Add(new ProductSizeStock
+                {
+                    ProductId = productId,
+                    Size = size,
+                    StockQuantity = quantity
+                });
+            }
+            else
+            {
+                sizeStock.StockQuantity = currentSizeStock + quantity;
+            }
+
+            product.StockQuantity = currentTotalStock + quantity;
+            _db.SaveChanges();
+            TempData["InventorySuccess"] = $"รับสินค้า {product.Name} ไซซ์ {size} เข้าคลังเพิ่ม {quantity} ชิ้นแล้ว";
+            return RedirectToAction(nameof(Inventory), new { search });
+        }
 
         var currentStock = Math.Max(0, product.StockQuantity ?? 0);
         if (quantity <= 0 || quantity > int.MaxValue - currentStock)

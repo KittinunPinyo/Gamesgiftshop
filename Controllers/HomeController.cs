@@ -18,6 +18,7 @@ namespace Gamesgiftshop.Controllers
         {
             // ดึงสินค้าล่าสุด 8 รายการมาแสดงที่หน้าแรก
             var products = _db.Products.OrderByDescending(p => p.ProductId).Take(8).ToList();
+            ViewBag.FavoriteProductIds = GetFavoriteProductIds();
             var now = DateTime.Now;
             ViewBag.ActivePromotions = _db.Promotions
                 .AsNoTracking()
@@ -28,6 +29,23 @@ namespace Gamesgiftshop.Controllers
                 .ToList();
 
             return View(products);
+        }
+
+        private HashSet<int> GetFavoriteProductIds()
+        {
+            var username = User.Identity?.IsAuthenticated == true ? User.Identity.Name : null;
+            if (string.IsNullOrWhiteSpace(username)) return new HashSet<int>();
+
+            var userId = _db.Users.AsNoTracking()
+                .Where(user => user.Username == username)
+                .Select(user => (int?)user.UserId)
+                .FirstOrDefault();
+            return userId.HasValue
+                ? _db.UserFavorites.AsNoTracking()
+                    .Where(favorite => favorite.UserId == userId.Value)
+                    .Select(favorite => favorite.ProductId)
+                    .ToHashSet()
+                : new HashSet<int>();
         }
 
         public IActionResult Privacy()

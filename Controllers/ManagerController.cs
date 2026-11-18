@@ -14,6 +14,7 @@ namespace Gamesgiftshop.Controllers
         private readonly Csi402dbContext _db;
         private static readonly string[] PromotionTypes = { "Coupon", "Tier", "FlashSale", "BuyXGetY" };
         private static readonly string[] ProductBadgeTypes = { "", "BestSeller", "New", "Hot", "Discount" };
+        private static readonly string[] ClothingSizes = ProductSizeStock.AvailableSizes;
 
         public ManagerController(Csi402dbContext db)
         {
@@ -33,18 +34,6 @@ namespace Gamesgiftshop.Controllers
             return View(allOrders);
         }
 
-        [HttpPost]
-        public IActionResult UpdateOrderStatus(int orderId, string newStatus)
-        {
-            var order = _db.Orders.FirstOrDefault(o => o.OrderId == orderId);
-            if (order != null) 
-            { 
-                order.Status = newStatus; 
-                _db.SaveChanges(); 
-            }
-            return RedirectToAction("Dashboard");
-        }
-
         // ==========================================
         // 2. จัดการแคตตาล็อกสินค้า (Products Management)
         // ==========================================
@@ -53,7 +42,10 @@ namespace Gamesgiftshop.Controllers
         {
             if (User.Identity == null || !User.Identity.IsAuthenticated) return RedirectToAction("Login", "Account");
             
-            var products = _db.Products.OrderByDescending(p => p.ProductId).ToList();
+            var products = _db.Products
+                .Include(product => product.SizeStocks)
+                .OrderByDescending(p => p.ProductId)
+                .ToList();
             return View(products);
         }
 
@@ -64,14 +56,24 @@ namespace Gamesgiftshop.Controllers
             
             // ดึงชื่อหมวดหมู่ทั้งหมดที่มีอยู่ในระบบ (แบบไม่ซ้ำกัน) ส่งไปให้หน้าเว็บแสดงผลใน Dropdown
             ViewBag.Categories = _db.Products.Select(p => p.Category).Distinct().ToList();
+            ViewBag.SizeStocks = new Dictionary<string, int>();
             
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Product product, List<string> ImageUrls)
+        public IActionResult Create(Product product, List<string> ImageUrls, Dictionary<string, int>? sizeStocks)
         {
+            Dictionary<string, int>? normalizedSizeStocks = null;
+            if (IsClothing(product.Category))
+            {
+                if (!TryNormalizeSizeStocks(sizeStocks, out normalizedSizeStocks))
+                    ModelState.AddModelError(nameof(sizeStocks), "กรุณาระบุสต็อกแต่ละไซซ์เป็นจำนวนเต็มตั้งแต่ 0 ขึ้นไป");
+                else
+                    product.StockQuantity = normalizedSizeStocks.Values.Sum();
+            }
+
             if (!ProductBadgeTypes.Contains(product.BadgeType ?? ""))
                 ModelState.AddModelError(nameof(product.BadgeType), "ป้ายสินค้าไม่ถูกต้อง");
             if (product.BadgeType == "Discount" &&
@@ -96,12 +98,25 @@ namespace Gamesgiftshop.Controllers
                 }
 
                 _db.Products.Add(product);
+                if (normalizedSizeStocks != null)
+                {
+                    _db.ProductSizeStocks.AddRange(normalizedSizeStocks.Select(stock => new ProductSizeStock
+                    {
+                        Product = product,
+                        Size = stock.Key,
+                        StockQuantity = stock.Value
+                    }));
+                }
+                AddUserBroadcastNotification(
+                    "สินค้าใหม่มาแล้ว!",
+                    $"สินค้าใหม่: {product.Name} ราคา ฿{product.Price:N0}");
                 _db.SaveChanges();
                 return RedirectToAction(nameof(Products)); // เสร็จแล้วกลับไปหน้า Products
             }
             
             // ถ้า Validate ไม่ผ่าน ให้ดึง Category กลับไปโชว์ใหม่ด้วยเพื่อป้องกัน Error หน้าเว็บ
             ViewBag.Categories = _db.Products.Select(p => p.Category).Distinct().ToList();
+            ViewBag.SizeStocks = sizeStocks ?? new Dictionary<string, int>();
             return View(product);
         }
         
@@ -114,7 +129,9 @@ namespace Gamesgiftshop.Controllers
             if (User.Identity == null || !User.Identity.IsAuthenticated) return RedirectToAction("Login", "Account");
             
             // ดึงข้อมูลสินค้าที่ต้องการแก้ไขจาก Database
-            var product = _db.Products.FirstOrDefault(p => p.ProductId == id);
+            var product = _db.Products
+                .Include(item => item.SizeStocks)
+                .FirstOrDefault(p => p.ProductId == id);
             if (product == null)
             {
                 return NotFound();
@@ -122,17 +139,32 @@ namespace Gamesgiftshop.Controllers
 
             // ดึงชื่อหมวดหมู่ทั้งหมดส่งไปให้ Dropdown
             ViewBag.Categories = _db.Products.Select(p => p.Category).Distinct().ToList();
+            var sizeStocks = ClothingSizes.ToDictionary(
+                size => size,
+                size => product.SizeStocks.FirstOrDefault(stock => stock.Size == size)?.StockQuantity ?? 0);
+            if (product.SizeStocks.Count == 0 && IsClothing(product.Category))
+                sizeStocks["L"] = Math.Max(0, product.StockQuantity ?? 0);
+            ViewBag.SizeStocks = sizeStocks;
             
             return View(product);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, Product data, List<string> ImageUrls)
+        public IActionResult Edit(int id, Product data, List<string> ImageUrls, Dictionary<string, int>? sizeStocks)
         {
             if (id != data.ProductId)
             {
                 return NotFound();
+            }
+
+            Dictionary<string, int>? normalizedSizeStocks = null;
+            if (IsClothing(data.Category))
+            {
+                if (!TryNormalizeSizeStocks(sizeStocks, out normalizedSizeStocks))
+                    ModelState.AddModelError(nameof(sizeStocks), "กรุณาระบุสต็อกแต่ละไซซ์เป็นจำนวนเต็มตั้งแต่ 0 ขึ้นไป");
+                else
+                    data.StockQuantity = normalizedSizeStocks.Values.Sum();
             }
 
             if (!ProductBadgeTypes.Contains(data.BadgeType ?? ""))
@@ -144,7 +176,9 @@ namespace Gamesgiftshop.Controllers
             if (ModelState.IsValid)
             {
                 // 1. ดึงข้อมูลสินค้าเดิมจากฐานข้อมูล
-                var existingProduct = _db.Products.FirstOrDefault(p => p.ProductId == id);
+                var existingProduct = _db.Products
+                    .Include(item => item.SizeStocks)
+                    .FirstOrDefault(p => p.ProductId == id);
                 
                 if (existingProduct == null)
                 {
@@ -178,11 +212,43 @@ namespace Gamesgiftshop.Controllers
                     existingProduct.ImageUrl = null;
                 }
 
+                if (normalizedSizeStocks != null)
+                {
+                    var removedSizes = existingProduct.SizeStocks
+                        .Where(stock => !normalizedSizeStocks.ContainsKey(stock.Size))
+                        .ToList();
+                    _db.ProductSizeStocks.RemoveRange(removedSizes);
+
+                    foreach (var stock in normalizedSizeStocks)
+                    {
+                        var existingSizeStock = existingProduct.SizeStocks
+                            .FirstOrDefault(item => item.Size == stock.Key);
+                        if (existingSizeStock == null)
+                        {
+                            _db.ProductSizeStocks.Add(new ProductSizeStock
+                            {
+                                ProductId = existingProduct.ProductId,
+                                Size = stock.Key,
+                                StockQuantity = stock.Value
+                            });
+                        }
+                        else
+                        {
+                            existingSizeStock.StockQuantity = stock.Value;
+                        }
+                    }
+                }
+                else
+                {
+                    _db.ProductSizeStocks.RemoveRange(existingProduct.SizeStocks);
+                }
+
                 _db.SaveChanges();
                 return RedirectToAction(nameof(Products));
             }
 
             ViewBag.Categories = _db.Products.Select(p => p.Category).Distinct().ToList();
+            ViewBag.SizeStocks = sizeStocks ?? new Dictionary<string, int>();
             return View(data);
         }
 
@@ -304,6 +370,12 @@ namespace Gamesgiftshop.Controllers
 
             promotion.IsActive = true;
             _db.Promotions.Add(promotion);
+            var promotionMessage = $"มีโปรโมชั่นใหม่: {promotion.Name}";
+            if (!string.IsNullOrWhiteSpace(promotion.Code))
+                promotionMessage += $" | ใช้โค้ด {promotion.Code}";
+            if (promotion.StartsAt.HasValue)
+                promotionMessage += $" | เริ่ม {promotion.StartsAt.Value.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)}";
+            AddUserBroadcastNotification("โปรโมชั่นใหม่มาแล้ว!", promotionMessage);
             _db.SaveChanges();
             TempData["PromotionSuccess"] = "สร้างโปรโมชั่นเรียบร้อยแล้ว";
             return RedirectToAction(nameof(Promotions));
@@ -337,35 +409,97 @@ namespace Gamesgiftshop.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Manager,Admin")]
-        public IActionResult Reports(string? startDate, string? endDate)
+        public IActionResult Reports(string? period, string? reportDate, string? startDate, string? endDate)
         {
             var today = DateTime.Today;
-            var start = today.AddDays(-29);
-            var end = today;
+            var selectedPeriod = string.IsNullOrWhiteSpace(period) ? "custom" : period.Trim().ToLowerInvariant();
+            if (selectedPeriod != "daily" && selectedPeriod != "weekly" &&
+                selectedPeriod != "monthly" && selectedPeriod != "custom")
+                return BadRequest("ประเภทรายงานไม่ถูกต้อง");
 
-            if (!string.IsNullOrWhiteSpace(startDate))
+            var anchorDate = today;
+            if (selectedPeriod != "custom" && !string.IsNullOrWhiteSpace(reportDate) &&
+                !DateTime.TryParseExact(reportDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out anchorDate))
             {
-                if (!DateTime.TryParseExact(startDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedStart))
+                ViewBag.Error = "รูปแบบวันที่ไม่ถูกต้อง";
+                return View(new SalesReportViewModel
                 {
-                    ViewBag.Error = "รูปแบบวันที่ไม่ถูกต้อง";
-                    return View(new SalesReportViewModel { StartDate = start, EndDate = end });
-                }
-                start = parsedStart;
+                    Period = selectedPeriod,
+                    ReportDate = today,
+                    StartDate = today,
+                    EndDate = today
+                });
             }
 
-            if (!string.IsNullOrWhiteSpace(endDate))
+            anchorDate = anchorDate.Date;
+            if ((selectedPeriod == "weekly" && anchorDate > DateTime.MaxValue.Date.AddDays(-6)) ||
+                (selectedPeriod == "monthly" && anchorDate.Year == 9999 && anchorDate.Month == 12))
+                return BadRequest("วันที่รายงานอยู่นอกช่วงที่รองรับ");
+
+            var start = selectedPeriod switch
             {
-                if (!DateTime.TryParseExact(endDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedEnd))
+                "weekly" => anchorDate.AddDays(-(((int)anchorDate.DayOfWeek + 6) % 7)),
+                "monthly" => new DateTime(anchorDate.Year, anchorDate.Month, 1),
+                "daily" => anchorDate,
+                _ => today.AddDays(-29)
+            };
+            var end = selectedPeriod switch
+            {
+                "weekly" => start.AddDays(6),
+                "monthly" => start.AddMonths(1).AddDays(-1),
+                "daily" => start,
+                _ => today
+            };
+
+            if (selectedPeriod == "custom")
+            {
+                if (!string.IsNullOrWhiteSpace(startDate))
                 {
-                    ViewBag.Error = "รูปแบบวันที่ไม่ถูกต้อง";
-                    return View(new SalesReportViewModel { StartDate = start, EndDate = end });
+                    if (!DateTime.TryParseExact(startDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out start))
+                    {
+                        ViewBag.Error = "รูปแบบวันที่เริ่มต้นไม่ถูกต้อง";
+                        return View(new SalesReportViewModel
+                        {
+                            Period = selectedPeriod,
+                            ReportDate = today,
+                            StartDate = today.AddDays(-29),
+                            EndDate = today
+                        });
+                    }
                 }
-                end = parsedEnd;
+
+                if (!string.IsNullOrWhiteSpace(endDate))
+                {
+                    if (!DateTime.TryParseExact(endDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out end))
+                    {
+                        ViewBag.Error = "รูปแบบวันที่สิ้นสุดไม่ถูกต้อง";
+                        return View(new SalesReportViewModel
+                        {
+                            Period = selectedPeriod,
+                            ReportDate = today,
+                            StartDate = start.Date,
+                            EndDate = today
+                        });
+                    }
+                }
             }
 
             start = start.Date;
             end = end.Date;
-            var report = new SalesReportViewModel { StartDate = start, EndDate = end };
+            var report = new SalesReportViewModel
+            {
+                Period = selectedPeriod,
+                ReportDate = anchorDate,
+                PeriodLabel = selectedPeriod switch
+                {
+                    "daily" => $"รายวัน · {start:dd/MM/yyyy}",
+                    "weekly" => $"รายสัปดาห์ · {start:dd/MM/yyyy} - {end:dd/MM/yyyy}",
+                    "monthly" => $"รายเดือน · {start:MM/yyyy}",
+                    _ => $"กำหนดช่วงเอง · {start:dd/MM/yyyy} - {end:dd/MM/yyyy}"
+                },
+                StartDate = start,
+                EndDate = end
+            };
 
             if (start > end || end == DateTime.MaxValue.Date)
             {
@@ -713,6 +847,49 @@ namespace Gamesgiftshop.Controllers
                 return RedirectToAction("Logout", "Account");
 
             return RedirectToAction(nameof(Users), new { search, role = roleFilter });
+        }
+
+        private static bool IsClothing(string? category) =>
+            string.Equals(category, "เสื้อผ้า", StringComparison.OrdinalIgnoreCase);
+
+        private static bool TryNormalizeSizeStocks(
+            Dictionary<string, int>? submitted,
+            out Dictionary<string, int> normalized)
+        {
+            normalized = new Dictionary<string, int>(StringComparer.Ordinal);
+            if (submitted == null)
+                return false;
+
+            foreach (var stock in submitted)
+            {
+                var size = stock.Key.Trim().ToUpperInvariant();
+                if (!ClothingSizes.Contains(size) || stock.Value < 0 || normalized.ContainsKey(size))
+                    return false;
+
+                normalized.Add(size, stock.Value);
+            }
+
+            return ClothingSizes.All(normalized.ContainsKey) &&
+                normalized.Values.Sum(value => (long)value) <= int.MaxValue;
+        }
+
+        private void AddUserBroadcastNotification(string title, string message)
+        {
+            var userIds = _db.Users
+                .AsNoTracking()
+                .Where(user => user.Role == "User")
+                .Select(user => user.UserId)
+                .ToList();
+            var createdAt = DateTime.Now;
+
+            _db.UserNotifications.AddRange(userIds.Select(userId => new UserNotification
+            {
+                UserId = userId,
+                Title = title,
+                Message = message,
+                IsRead = false,
+                CreatedAt = createdAt
+            }));
         }
     }
 }

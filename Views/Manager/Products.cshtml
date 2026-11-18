@@ -135,6 +135,16 @@
                                         class="status-badge @(item.StockQuantity > 0 ? "bg-success text-white" : "bg-warning text-dark")">
                                         @item.StockQuantity
                                     </span>
+                                    @if (string.Equals(item.Category, "เสื้อผ้า", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <div class="small text-muted mt-1">
+                                            @foreach (var size in Gamesgiftshop.Models.ProductSizeStock.AvailableSizes)
+                                            {
+                                                var sizeStock = item.SizeStocks.FirstOrDefault(stock => stock.Size == size)?.StockQuantity ?? 0;
+                                                <span class="me-1">@size: @sizeStock</span>
+                                            }
+                                        </div>
+                                    }
                                 </td>
                                 <td>
                                     <form asp-action="UpdateProductBadge" method="post" class="d-flex align-items-center gap-2">

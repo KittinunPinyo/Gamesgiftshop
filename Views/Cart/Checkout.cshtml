@@ -86,6 +86,10 @@
     <a href="/Cart" class="back-link"><i class="fa-solid fa-arrow-left me-2"></i> กลับไปหน้าตะกร้าสินค้า</a>
     
     <h1 class="page-title-checkout">ยืนยันคำสั่งซื้อและการชำระเงิน</h1>
+    @if (TempData["CheckoutError"] != null)
+    {
+        <div class="alert alert-danger">@TempData["CheckoutError"]</div>
+    }
 
     <div class="row g-4">
         
