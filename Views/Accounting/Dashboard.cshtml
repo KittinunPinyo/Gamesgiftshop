@@ -3,7 +3,6 @@
 @{
     Layout = "_AccountingLayout";
     ViewData["Title"] = "บัญชีรายรับรายจ่าย";
-    var monthValue = Model.Month.ToString("yyyy-MM", CultureInfo.InvariantCulture);
 }
 
 <style>
@@ -22,7 +21,7 @@
     <div>
         <div class="accounting-eyebrow">FINANCE OVERVIEW</div>
         <h1 class="h3 fw-bold mb-1">บัญชีรายรับรายจ่าย</h1>
-        <p>จัดการธุรกรรม ตรวจสอบยอดขาย และสรุปผลประกอบการรายเดือน</p>
+        <p>จัดการธุรกรรม ตรวจสอบยอดขาย และสรุปผลประกอบการตามช่วงเวลา</p>
     </div>
 </div>
 
@@ -34,17 +33,53 @@
 {
     <div class="alert alert-danger">@TempData["AccountingError"]</div>
 }
+@if ((int)(ViewBag.PendingPaymentCount ?? 0) > 0)
+{
+    <div class="alert alert-warning d-flex flex-wrap align-items-center justify-content-between gap-2" role="alert">
+        <span><i class="fa-solid fa-bell me-2" aria-hidden="true"></i>มี @ViewBag.PendingPaymentCount ออเดอร์รอตรวจสอบยอดชำระ</span>
+        <a asp-action="Payments" class="alert-link">ไปตรวจสอบการชำระเงิน</a>
+    </div>
+}
+@if ((int)(ViewBag.PendingRefundRequestCount ?? 0) > 0)
+{
+    <div class="alert alert-info d-flex flex-wrap align-items-center justify-content-between gap-2" role="status">
+        <span><i class="fa-solid fa-rotate-left me-2" aria-hidden="true"></i>มี @ViewBag.PendingRefundRequestCount คำขอคืนเงินรอพิจารณา</span>
+        <a asp-action="Refunds" class="alert-link">ไปดูคำขอคืนเงิน</a>
+    </div>
+}
 
 <section class="accounting-card accounting-period-card p-4 mb-4">
     <form method="get" asp-action="Dashboard" class="row g-3 align-items-end">
-        <div class="col-sm-6 col-md-4">
-            <label class="form-label" for="month">สรุปประจำเดือน</label>
-            <input class="form-control" type="month" id="month" name="month" value="@monthValue" />
+        <div class="col-sm-6 col-md-3">
+            <label class="form-label" for="period">ช่วงสรุป</label>
+            <select class="form-select" id="period" name="period">
+                <option value="day" selected="@(Model.Period == "day" ? "selected" : null)">รายวัน</option>
+                <option value="week" selected="@(Model.Period == "week" ? "selected" : null)">รายสัปดาห์</option>
+                <option value="month" selected="@(Model.Period == "month" ? "selected" : null)">รายเดือน</option>
+            </select>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <label class="form-label" for="date">วันที่อ้างอิง</label>
+            <input class="form-control" type="@(Model.Period == "month" ? "month" : "date")"
+                   id="date" name="date" value="@Model.DateInputValue" required />
         </div>
         <div class="col-sm-4 col-md-2">
             <button type="submit" class="btn btn-success w-100"><i class="fa-solid fa-filter me-1"></i> ดูสรุป</button>
         </div>
-        <div class="col-12 text-muted small">เดือน @Model.Month.ToString("MMMM yyyy", CultureInfo.GetCultureInfo("th-TH"))</div>
+        <div class="col-12 d-flex flex-wrap gap-2">
+            <a asp-action="ExportExcel" asp-route-period="@Model.Period" asp-route-date="@Model.DateInputValue"
+               class="btn btn-outline-success">
+                <i class="fa-solid fa-file-excel me-1" aria-hidden="true"></i> Export Excel
+            </a>
+            <a asp-action="ExportPdf" asp-route-period="@Model.Period" asp-route-date="@Model.DateInputValue"
+               class="btn btn-outline-danger">
+                <i class="fa-solid fa-file-pdf me-1" aria-hidden="true"></i> Export PDF
+            </a>
+            <a asp-action="Refunds" class="btn btn-outline-primary">
+                <i class="fa-solid fa-rotate-left me-1" aria-hidden="true"></i> คำขอคืนเงิน
+            </a>
+        </div>
+        <div class="col-12 text-muted small">สรุปช่วง: @Model.PeriodLabel</div>
     </form>
 </section>
 
@@ -56,8 +91,8 @@
     <span class="badge text-bg-warning">@((int)(ViewBag.PendingPaymentCount ?? 0)) รายการรอตรวจสอบ</span>
 </a>
 
-<div class="row g-3 mb-4">
-    <div class="col-sm-6 col-xl-3">
+<div class="row row-cols-1 row-cols-sm-2 row-cols-xl-5 g-3 mb-4">
+    <div class="col">
         <section class="accounting-card accounting-metric-card accounting-revenue-metric p-4 h-100">
             <div class="d-flex justify-content-between align-items-center">
                 <div><div class="accounting-label">รายรับจากยอดขาย</div><div class="accounting-value">฿@Model.Revenue.ToString("N2")</div></div>
@@ -65,7 +100,7 @@
             </div>
         </section>
     </div>
-    <div class="col-sm-6 col-xl-3">
+    <div class="col">
         <section class="accounting-card accounting-metric-card accounting-expense-metric p-4 h-100">
             <div class="d-flex justify-content-between align-items-center">
                 <div><div class="accounting-label">รายจ่าย</div><div class="accounting-value text-danger">฿@Model.ExpenseTotal.ToString("N2")</div></div>
@@ -73,7 +108,15 @@
             </div>
         </section>
     </div>
-    <div class="col-sm-6 col-xl-3">
+    <div class="col">
+        <section class="accounting-card accounting-metric-card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div><div class="accounting-label">คืนเงินแล้ว</div><div class="accounting-value text-warning">฿@Model.RefundTotal.ToString("N2")</div></div>
+                <div class="accounting-icon text-warning bg-warning-subtle"><i class="fa-solid fa-rotate-left"></i></div>
+            </div>
+        </section>
+    </div>
+    <div class="col">
         <section class="accounting-card accounting-metric-card accounting-net-metric p-4 h-100">
             <div class="d-flex justify-content-between align-items-center">
                 <div><div class="accounting-label">คงเหลือสุทธิ</div><div class="accounting-value @(Model.NetIncome < 0 ? "text-danger" : "")">฿@Model.NetIncome.ToString("N2")</div></div>
@@ -81,7 +124,7 @@
             </div>
         </section>
     </div>
-    <div class="col-sm-6 col-xl-3">
+    <div class="col">
         <section class="accounting-card accounting-metric-card accounting-orders-metric p-4 h-100">
             <div class="d-flex justify-content-between align-items-center">
                 <div><div class="accounting-label">ออเดอร์ที่ชำระแล้ว</div><div class="accounting-value">@Model.PaidOrderCount.ToString("N0")</div></div>
@@ -97,7 +140,8 @@
             <h2 class="h5 fw-bold mb-3"><i class="fa-solid fa-circle-plus me-2"></i>บันทึกรายจ่าย</h2>
             <form asp-action="AddExpense" method="post">
                 @Html.AntiForgeryToken()
-                <input type="hidden" name="month" value="@monthValue" />
+                <input type="hidden" name="period" value="@Model.Period" />
+                <input type="hidden" name="date" value="@Model.DateInputValue" />
                 <div class="mb-3">
                     <label class="form-label" for="description">รายละเอียด</label>
                     <input class="form-control" id="description" name="description" maxlength="200" required placeholder="เช่น ค่าบรรจุภัณฑ์" />
@@ -113,7 +157,7 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label" for="expenseDate">วันที่จ่าย</label>
-                        <input class="form-control" id="expenseDate" name="expenseDate" type="date" value="@Model.Month.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)" required />
+                        <input class="form-control" id="expenseDate" name="expenseDate" type="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)" required />
                     </div>
                     <div class="col-md-6 d-flex align-items-end">
                         <button class="btn btn-success w-100" type="submit"><i class="fa-solid fa-plus me-1"></i> เพิ่มรายจ่าย</button>
@@ -144,7 +188,8 @@
                                     <form asp-action="DeleteExpense" method="post" onsubmit="return confirm('ยืนยันลบรายการนี้หรือไม่?');">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@expense.AccountingExpenseId" />
-                                        <input type="hidden" name="month" value="@monthValue" />
+                                        <input type="hidden" name="period" value="@Model.Period" />
+                                        <input type="hidden" name="date" value="@Model.DateInputValue" />
                                         <button class="btn btn-sm btn-outline-danger" type="submit" aria-label="ลบ @expense.Description"><i class="fa-solid fa-trash"></i></button>
                                     </form>
                                 </td>
@@ -166,7 +211,7 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <div>
             <h2 class="h5 fw-bold mb-1"><i class="fa-solid fa-arrow-trend-up me-2"></i>ธุรกรรมรายรับจากคำสั่งซื้อ</h2>
-            <div class="small text-muted">รวมเฉพาะออเดอร์ที่ชำระแล้วและอยู่ระหว่างจัดส่งหรือจัดส่งแล้ว</div>
+            <div class="small text-muted">รวมออเดอร์ที่ชำระเงินแล้ว รวมยอดก่อนหักรายการคืนเงิน</div>
         </div>
         <span class="badge text-bg-success">@Model.SalesTransactions.Count รายการ</span>
     </div>
@@ -197,3 +242,20 @@
         </table>
     </div>
 </section>
+
+<script>
+    (() => {
+        const periodInput = document.getElementById("period");
+        const dateInput = document.getElementById("date");
+        if (!periodInput || !dateInput) return;
+
+        periodInput.addEventListener("change", () => {
+            const currentValue = dateInput.value;
+            const nextType = periodInput.value === "month" ? "month" : "date";
+            dateInput.type = nextType;
+            dateInput.value = nextType === "month"
+                ? currentValue.slice(0, 7)
+                : currentValue.length === 7 ? `${currentValue}-01` : currentValue;
+        });
+    })();
+</script>

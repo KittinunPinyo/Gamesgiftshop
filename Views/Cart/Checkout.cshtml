@@ -173,7 +173,7 @@
                                 <div class="small text-success mt-1">หักส่วนลดแล้ว ฿@discount.ToString("N0")</div>
                             }
                         </div>
-                        <span class="total-amount-value">฿@grandTotal.ToString("N0")</span>
+                        <span class="total-amount-value">฿@grandTotal.ToString("N2")</span>
                     </div>
                 </div>
 
@@ -187,14 +187,14 @@
                 <h3 class="section-header">ช่องทางการชำระเงิน (พร้อมเพย์)</h3>
                 
                 <div class="qr-container">
-                    <p class="qr-instruction">สแกนคิวอาร์โค้ด (QR Code) ด้านล่างผ่านแอปพลิเคชันธนาคารของคุณ</p>
+                    <p class="qr-instruction">สแกนผ่านแอปธนาคาร ระบบระบุยอดชำระ ฿@grandTotal.ToString("N2") ไว้ใน QR แล้ว</p>
                     
                     <div class="qr-box">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" alt="QR Code">
+                        <img src="@ViewBag.PaymentQrCodeDataUrl" alt="PromptPay QR ระบุยอด ฿@grandTotal.ToString("N2")">
                     </div>
                     
-                    <div class="acc-name">ชื่อบัญชี: Games Gift Shop</div>
-                    <div class="acc-amount">฿@grandTotal.ToString("N0")</div>
+                    <div class="acc-name">ชื่อบัญชี: กิตตินันท์ ภิญโญ</div>
+                    <div class="acc-amount">฿@grandTotal.ToString("N2")</div>
                 </div>
 
                 <h3 class="section-header mt-4 pt-3 border-top" style="border-color: #222631 !important;">แนบหลักฐานการโอนเงิน</h3>

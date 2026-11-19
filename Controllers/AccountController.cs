@@ -8,6 +8,7 @@ using Gamesgiftshop.Models;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Gamesgiftshop.Services;
 
 namespace Gamesgiftshop.Controllers
 {
@@ -165,6 +166,11 @@ namespace Gamesgiftshop.Controllers
                     .Where(o => o.UserId == currentUser.UserId)
                     .OrderByDescending(o => o.OrderDate)
                     .ToList();
+                ViewBag.RefundRequests = _db.RefundRequests
+                    .AsNoTracking()
+                    .Where(request => request.UserId == currentUser.UserId)
+                    .OrderByDescending(request => request.RequestedAt)
+                    .ToList();
                 var eligibleOrders = myOrders
                     .Where(order => !IsCancelledOrder(order.Status))
                     .ToList();
@@ -174,6 +180,171 @@ namespace Gamesgiftshop.Controllers
             }
 
             return View(myOrders);
+        }
+
+        [Authorize(Roles = "User")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(6 * 1024 * 1024)]
+        public async Task<IActionResult> RequestRefund(int orderId, string? reason, IFormFile? evidence)
+        {
+            var user = _db.Users
+                .AsNoTracking()
+                .FirstOrDefault(item => item.Username == User.Identity!.Name);
+            if (user == null)
+                return RedirectToAction(nameof(Login));
+
+            using var transaction = _db.Database.BeginTransaction();
+            var order = _db.Orders
+                .FromSqlInterpolated($"SELECT * FROM orders WHERE OrderId = {orderId} AND UserID = {user.UserId} FOR UPDATE")
+                .AsEnumerable()
+                .FirstOrDefault();
+            if (order == null)
+                return NotFound();
+
+            reason = reason?.Trim() ?? "";
+            if (reason.Length is < 5 or > 1000)
+            {
+                TempData["RefundRequestError"] = "กรุณาระบุเหตุผลการคืนเงินอย่างน้อย 5 ตัวอักษร";
+                return RedirectToAction(nameof(Profile), new { panel = "orders-panel" });
+            }
+
+            if (evidence == null || evidence.Length < 8 || evidence.Length > 5 * 1024 * 1024)
+            {
+                TempData["RefundRequestError"] = "กรุณาแนบรูปหลักฐาน JPEG หรือ PNG ขนาดไม่เกิน 5 MB";
+                return RedirectToAction(nameof(Profile), new { panel = "orders-panel" });
+            }
+
+            var refundableStatus = order.Status == "ชำระเงินสำเร็จแล้ว" ||
+                order.Status == "เตรียมจัดส่ง" ||
+                order.Status == "จัดส่งแล้ว" ||
+                order.Status == "สำเร็จ";
+            if (!refundableStatus || !order.OrderDate.HasValue ||
+                order.OrderDate.Value < DateTime.Now.AddDays(-7) ||
+                order.OrderDate.Value > DateTime.Now)
+            {
+                TempData["RefundRequestError"] = "คำสั่งซื้อนี้ไม่อยู่ในเงื่อนไขการขอคืนเงินภายใน 7 วัน";
+                return RedirectToAction(nameof(Profile), new { panel = "orders-panel" });
+            }
+
+            var hasActiveOrCompletedRequest = _db.RefundRequests.Any(request =>
+                request.OrderId == orderId &&
+                request.Status != RefundRequest.RejectedStatus);
+            if (hasActiveOrCompletedRequest)
+            {
+                TempData["RefundRequestError"] = "คำสั่งซื้อนี้มีคำขอคืนเงินที่กำลังตรวจสอบหรือดำเนินการแล้ว";
+                return RedirectToAction(nameof(Profile), new { panel = "orders-panel" });
+            }
+
+            using var evidenceStream = new MemoryStream();
+            await evidence.CopyToAsync(evidenceStream);
+            var bytes = evidenceStream.ToArray();
+            var isJpeg = bytes.Length >= 3 && bytes[0] == 0xff && bytes[1] == 0xd8 && bytes[2] == 0xff;
+            var isPng = bytes.Length >= 8 && bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4e &&
+                bytes[3] == 0x47 && bytes[4] == 0x0d && bytes[5] == 0x0a && bytes[6] == 0x1a && bytes[7] == 0x0a;
+            if (bytes.Length != evidence.Length || (!isJpeg && !isPng))
+            {
+                TempData["RefundRequestError"] = "รูปหลักฐานต้องเป็นไฟล์ JPEG หรือ PNG ที่ถูกต้อง";
+                return RedirectToAction(nameof(Profile), new { panel = "orders-panel" });
+            }
+
+            _db.RefundRequests.Add(new RefundRequest
+            {
+                OrderId = order.OrderId,
+                UserId = user.UserId,
+                Reason = reason,
+                Evidence = new RefundEvidence { Data = bytes, ContentType = isJpeg ? "image/jpeg" : "image/png" },
+                Status = RefundRequest.PendingStatus,
+                RequestedAt = DateTime.Now
+            });
+            _db.SaveChanges();
+            transaction.Commit();
+
+            TempData["RefundRequestSuccess"] = $"ส่งคำขอคืนเงินของออเดอร์ #{orderId} แล้ว";
+            return RedirectToAction(nameof(Profile), new { panel = "orders-panel" });
+        }
+
+        [Authorize(Roles = "User")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult SubmitReturnTracking(int id, string? trackingNumber)
+        {
+            trackingNumber = trackingNumber?.Trim() ?? "";
+            if (trackingNumber.Length is < 1 or > 100)
+            {
+                TempData["RefundRequestError"] = "กรุณาระบุเลขพัสดุไม่เกิน 100 ตัวอักษร";
+                return RedirectToAction(nameof(Profile), new { panel = "orders-panel" });
+            }
+
+            var username = User.Identity?.Name;
+            var updated = _db.RefundRequests
+                .Where(request => request.RefundRequestId == id &&
+                    request.User.Username == username &&
+                    request.Status == RefundRequest.AwaitingReturnStatus)
+                .ExecuteUpdate(updates => updates
+                    .SetProperty(request => request.ReturnTrackingNumber, trackingNumber)
+                    .SetProperty(request => request.Status, RefundRequest.ReturnShippedStatus));
+            if (updated == 0)
+            {
+                TempData["RefundRequestError"] = "ไม่พบคำขอที่รอส่งคืนสินค้าหรือสถานะมีการเปลี่ยนแปลงแล้ว";
+                return RedirectToAction(nameof(Profile), new { panel = "orders-panel" });
+            }
+            TempData["RefundRequestSuccess"] = "บันทึกเลขพัสดุแล้ว รอฝ่ายบัญชีตรวจรับสินค้า";
+            return RedirectToAction(nameof(Profile), new { panel = "orders-panel" });
+        }
+
+        [Authorize(Roles = "User")]
+        [HttpGet]
+        public IActionResult RefundReceipt(int id)
+        {
+            var username = User.Identity?.Name;
+            if (string.IsNullOrWhiteSpace(username))
+                return Challenge();
+
+            var request = _db.RefundRequests
+                .AsNoTracking()
+                .Include(item => item.User)
+                .Include(item => item.Order)
+                    .ThenInclude(order => order.Orderdetails)
+                        .ThenInclude(detail => detail.Product)
+                .FirstOrDefault(item =>
+                    item.RefundRequestId == id &&
+                    item.User.Username == username &&
+                    item.Status == RefundRequest.RefundedStatus);
+            if (request == null)
+                return NotFound();
+
+            return File(
+                AccountingReportExporter.CreateRefundReceipt(request),
+                "application/pdf",
+                $"refund-receipt-{request.RefundRequestId:D6}.pdf");
+        }
+
+        [Authorize(Roles = "Admin,Manager,Staff,Accountant")]
+        [HttpGet]
+        public IActionResult StaffProfile()
+        {
+            var profile = _db.Users
+                .AsNoTracking()
+                .Where(user => user.Username == User.Identity!.Name)
+                .Select(user => new StaffProfileViewModel
+                {
+                    Username = user.Username,
+                    Email = user.Email,
+                    Phone = user.Phone,
+                    RoleName = user.Role == "Admin" ? "ผู้ดูแลระบบ" :
+                        user.Role == "Manager" ? "ฝ่ายจัดการ" :
+                        user.Role == "Staff" ? "ฝ่ายปฏิบัติการ" :
+                        "ฝ่ายบัญชีและการเงิน"
+                })
+                .FirstOrDefault();
+
+            if (profile == null)
+            {
+                return NotFound();
+            }
+
+            return View(profile);
         }
 
         [Authorize]

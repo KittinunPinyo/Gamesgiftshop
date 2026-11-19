@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using System.Linq;
 using Gamesgiftshop.Models;
 
@@ -92,7 +93,100 @@ namespace Gamesgiftshop.Controllers
             ViewBag.IsFavorite = userId.HasValue && _db.UserFavorites
                 .AsNoTracking()
                 .Any(favorite => favorite.UserId == userId.Value && favorite.ProductId == product.ProductId);
+
+            var reviews = (from review in _db.ProductReviews.AsNoTracking()
+                           join user in _db.Users.AsNoTracking() on review.UserId equals user.UserId
+                           where review.ProductId == product.ProductId
+                           orderby review.CreatedAt descending, review.ReviewId descending
+                           select new ProductReviewDisplayViewModel
+                           {
+                               Username = user.Username,
+                               Rating = review.Rating,
+                               Comment = review.Comment,
+                               CreatedAt = review.CreatedAt
+                           })
+                .ToList();
+            var legacyReviewCount = Math.Max(0, product.ReviewCount ?? 0);
+            var totalReviewCount = legacyReviewCount + reviews.Count;
+            var totalRating = (product.Rating ?? 0m) * legacyReviewCount +
+                reviews.Sum(review => (decimal)review.Rating);
+            ViewBag.ProductReviews = reviews;
+            ViewBag.DisplayReviewCount = totalReviewCount;
+            ViewBag.DisplayRating = totalReviewCount == 0 ? 0m : totalRating / totalReviewCount;
+
+            var hasReviewed = userId.HasValue && _db.ProductReviews
+                .AsNoTracking()
+                .Any(review => review.ProductId == product.ProductId && review.UserId == userId.Value);
+            var hasPurchased = userId.HasValue && _db.Orders
+                .AsNoTracking()
+                .Any(order => order.UserId == userId.Value &&
+                    (order.Status == "ชำระเงินสำเร็จแล้ว" ||
+                     order.Status == "เตรียมจัดส่ง" ||
+                     order.Status == "จัดส่งแล้ว" ||
+                     order.Status == "สำเร็จ") &&
+                    order.Orderdetails.Any(detail => detail.ProductId == product.ProductId));
+            ViewBag.HasReviewed = hasReviewed;
+            ViewBag.HasPurchased = hasPurchased;
+
             return View(product);
+        }
+
+        [Authorize(Roles = "User")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Review(int productId, int rating, string? comment)
+        {
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue) return Forbid();
+
+            var product = _db.Products.FirstOrDefault(item => item.ProductId == productId);
+            if (product == null) return NotFound();
+
+            var normalizedComment = comment?.Trim();
+            if (rating is < 1 or > 5 || string.IsNullOrWhiteSpace(normalizedComment) || normalizedComment.Length > 1000)
+            {
+                TempData["ReviewError"] = "กรุณาให้คะแนน 1–5 ดาวและเขียนรีวิวไม่เกิน 1,000 ตัวอักษร";
+                return RedirectToReviewSection(productId);
+            }
+
+            var hasPaidOrder = _db.Orders
+                .AsNoTracking()
+                .Any(order => order.UserId == userId.Value &&
+                    (order.Status == "ชำระเงินสำเร็จแล้ว" ||
+                     order.Status == "เตรียมจัดส่ง" ||
+                     order.Status == "จัดส่งแล้ว" ||
+                     order.Status == "สำเร็จ") &&
+                    order.Orderdetails.Any(detail => detail.ProductId == productId));
+            if (!hasPaidOrder)
+            {
+                TempData["ReviewError"] = "รีวิวได้เฉพาะสินค้าที่เคยสั่งซื้อและชำระเงินแล้ว";
+                return RedirectToReviewSection(productId);
+            }
+
+            if (_db.ProductReviews.Any(review => review.ProductId == productId && review.UserId == userId.Value))
+            {
+                TempData["ReviewError"] = "คุณรีวิวสินค้านี้ไปแล้ว";
+                return RedirectToReviewSection(productId);
+            }
+
+            _db.ProductReviews.Add(new ProductReview
+            {
+                ProductId = productId,
+                UserId = userId.Value,
+                Rating = rating,
+                Comment = normalizedComment,
+                CreatedAt = DateTime.Now
+            });
+            _db.SaveChanges();
+
+            TempData["ReviewSuccess"] = "บันทึกรีวิวสินค้าเรียบร้อยแล้ว";
+            return RedirectToReviewSection(productId);
+        }
+
+        private IActionResult RedirectToReviewSection(int productId)
+        {
+            var productUrl = Url.Action(nameof(Details), new { id = productId }) ?? $"/Product/Details/{productId}";
+            return Redirect($"{productUrl}#reviews");
         }
 
         private int? GetCurrentUserId()

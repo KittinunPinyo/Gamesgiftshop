@@ -26,7 +26,25 @@ public class StaffController : Controller
             .OrderBy(order => order.OrderDate)
             .ToList();
 
+        var readyOrders = orders.Where(order => order.Status == "ชำระเงินสำเร็จแล้ว").ToList();
+        ViewBag.ReadyOrderCount = readyOrders.Count;
+        ViewBag.LatestReadyOrderId = readyOrders.Select(order => order.OrderId).DefaultIfEmpty().Max();
+
         return View(orders);
+    }
+
+    [HttpGet]
+    public IActionResult OrderStatus()
+    {
+        var readyOrders = _db.Orders
+            .AsNoTracking()
+            .Where(order => order.Status == "ชำระเงินสำเร็จแล้ว");
+
+        return Json(new
+        {
+            pendingCount = readyOrders.Count(),
+            latestOrderId = readyOrders.Max(order => (int?)order.OrderId) ?? 0
+        });
     }
 
     [HttpPost]

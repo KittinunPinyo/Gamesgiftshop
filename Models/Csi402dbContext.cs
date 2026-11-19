@@ -24,6 +24,8 @@ public partial class Csi402dbContext : DbContext
 
     public virtual DbSet<Product> Products { get; set; }
 
+    public virtual DbSet<ProductReview> ProductReviews { get; set; }
+
     public virtual DbSet<ProductSizeStock> ProductSizeStocks { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
@@ -33,6 +35,10 @@ public partial class Csi402dbContext : DbContext
     public virtual DbSet<UserFavorite> UserFavorites { get; set; }
 
     public virtual DbSet<AccountingExpense> AccountingExpenses { get; set; }
+
+    public virtual DbSet<RefundRequest> RefundRequests { get; set; }
+
+    public virtual DbSet<RefundEvidence> RefundEvidence { get; set; }
 
     public virtual DbSet<Useraddress> Useraddresses { get; set; }
 
@@ -141,6 +147,27 @@ public partial class Csi402dbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<ProductReview>(entity =>
+        {
+            entity.HasKey(e => e.ReviewId);
+            entity.ToTable("productreviews");
+            entity.Property(e => e.Comment).HasMaxLength(1000);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("datetime");
+            entity.Property(e => e.UserId).HasColumnName("UserID");
+            entity.HasIndex(e => e.ProductId);
+            entity.HasIndex(e => new { e.UserId, e.ProductId }).IsUnique();
+            entity.HasOne<Product>()
+                .WithMany()
+                .HasForeignKey(e => e.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasKey(e => e.UserId).HasName("PRIMARY");
@@ -209,6 +236,47 @@ public partial class Csi402dbContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("datetime");
             entity.HasIndex(e => e.ExpenseDate);
+        });
+
+        modelBuilder.Entity<RefundRequest>(entity =>
+        {
+            entity.HasKey(e => e.RefundRequestId).HasName("PRIMARY");
+            entity.ToTable("refundrequests");
+            entity.Property(e => e.UserId).HasColumnName("UserID");
+            entity.Property(e => e.Reason).HasMaxLength(1000);
+            entity.Property(e => e.Status)
+                .HasMaxLength(30)
+                .HasDefaultValue(RefundRequest.PendingStatus);
+            entity.Property(e => e.Feedback).HasMaxLength(1000);
+            entity.Property(e => e.ReturnAddress).HasMaxLength(1000);
+            entity.Property(e => e.ReturnTrackingNumber).HasMaxLength(100);
+            entity.Property(e => e.RequestedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ReviewedAt).HasColumnType("datetime");
+            entity.Property(e => e.ReviewedBy).HasMaxLength(50);
+            entity.HasIndex(e => new { e.Status, e.RequestedAt });
+            entity.HasIndex(e => new { e.Status, e.ReviewedAt });
+            entity.HasOne(e => e.Order).WithMany()
+                .HasForeignKey(e => e.OrderId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("refundrequests_ibfk_1");
+            entity.HasOne(e => e.User).WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("refundrequests_ibfk_2");
+        });
+
+        modelBuilder.Entity<RefundEvidence>(entity =>
+        {
+            entity.ToTable("refundevidence");
+            entity.HasKey(e => e.RefundRequestId);
+            entity.Property(e => e.RefundRequestId).ValueGeneratedNever();
+            entity.Property(e => e.Data).HasColumnType("longblob");
+            entity.Property(e => e.ContentType).HasMaxLength(20);
+            entity.HasOne(e => e.Request).WithOne(e => e.Evidence)
+                .HasForeignKey<RefundEvidence>(e => e.RefundRequestId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Useraddress>(entity =>

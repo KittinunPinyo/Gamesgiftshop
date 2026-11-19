@@ -1,5 +1,7 @@
 @{
     var currentAction = ViewContext.RouteData.Values["Action"]?.ToString() ?? string.Empty;
+    var pendingPaymentCount = (int)(ViewBag.PendingPaymentCount ?? 0);
+    var pendingRefundRequestCount = (int)(ViewBag.PendingRefundRequestCount ?? 0);
 }
 <!DOCTYPE html>
 <html lang="th">
@@ -40,14 +42,81 @@
                 <li><a asp-controller="Admin" asp-action="Dashboard"><i class="fa-solid fa-shield-halved"></i><span>Admin Console</span></a></li>
             }
             <li><a asp-controller="Accounting" asp-action="Dashboard" class="@(currentAction == "Dashboard" ? "active" : "")"><i class="fa-solid fa-chart-line"></i><span>บัญชีรายรับรายจ่าย</span></a></li>
-            <li><a asp-controller="Accounting" asp-action="Payments" class="@(currentAction == "Payments" ? "active" : "")"><i class="fa-solid fa-money-check-dollar"></i><span>ตรวจสอบการชำระเงิน</span></a></li>
+            <li>
+                <a asp-controller="Accounting" asp-action="Payments" class="@(currentAction == "Payments" ? "active" : "")">
+                    <i class="fa-solid fa-money-check-dollar"></i>
+                    <span>ตรวจสอบการชำระเงิน</span>
+                    <span id="accounting-pending-payment-badge" class="accounting-pending-payment-badge @(pendingPaymentCount > 0 ? "" : "d-none")"
+                          data-latest-order-id="@((int)(ViewBag.LatestPendingPaymentOrderId ?? 0))">@pendingPaymentCount</span>
+                </a>
+            </li>
+            <li>
+                <a asp-controller="Accounting" asp-action="Refunds" class="@(currentAction == "Refunds" ? "active" : "")">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span>คำขอคืนเงิน</span>
+                    @if (pendingRefundRequestCount > 0)
+                    {
+                        <span class="badge rounded-pill text-bg-warning">@pendingRefundRequestCount</span>
+                    }
+                </a>
+            </li>
         </ul>
     </nav>
+    <div id="accounting-live-payment-notice" class="accounting-live-payment-notice" role="status" aria-live="polite" hidden>
+        <i class="fa-solid fa-bell" aria-hidden="true"></i>
+        <span id="accounting-live-payment-message"></span>
+        <a asp-controller="Accounting" asp-action="Payments">ตรวจสอบ</a>
+        <button id="accounting-live-payment-dismiss" type="button" aria-label="ปิดการแจ้งเตือน">&times;</button>
+    </div>
     <main class="accounting-content">
         @RenderBody()
     </main>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (() => {
+            const badge = document.getElementById("accounting-pending-payment-badge");
+            const notice = document.getElementById("accounting-live-payment-notice");
+            const message = document.getElementById("accounting-live-payment-message");
+            const dismiss = document.getElementById("accounting-live-payment-dismiss");
+            const statusUrl = "@Url.Action("PaymentStatus", "Accounting")";
+            let latestOrderId = Number(badge.dataset.latestOrderId || "0");
+
+            dismiss.addEventListener("click", () => {
+                notice.hidden = true;
+            });
+
+            const refreshPendingPayments = async () => {
+                try {
+                    const response = await fetch(statusUrl, { headers: { "Accept": "application/json" } });
+                    if (!response.ok) throw new Error(`Payment status request failed: ${response.status}`);
+
+                    const status = await response.json();
+                    const nextCount = Number(status.pendingCount);
+                    const nextLatestOrderId = Number(status.latestOrderId);
+                    if (!Number.isInteger(nextCount) || nextCount < 0 ||
+                        !Number.isInteger(nextLatestOrderId) || nextLatestOrderId < 0) {
+                        throw new Error("Payment status response contained invalid order data.");
+                    }
+
+                    badge.textContent = nextCount;
+                    badge.dataset.latestOrderId = nextLatestOrderId;
+                    badge.classList.toggle("d-none", nextCount === 0);
+
+                    if (nextLatestOrderId > latestOrderId) {
+                        message.textContent = "มีออเดอร์ใหม่เข้ามา รอตรวจสอบยอดชำระ";
+                        notice.hidden = false;
+                    }
+                    latestOrderId = nextLatestOrderId;
+                } catch (error) {
+                    console.error("Unable to refresh pending payment notifications.", error);
+                }
+            };
+
+            refreshPendingPayments();
+            window.setInterval(refreshPendingPayments, 30000);
+        })();
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

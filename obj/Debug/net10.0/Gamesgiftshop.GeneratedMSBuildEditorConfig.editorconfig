@@ -39,6 +39,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudGluZ1xQYXltZW50cy5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/CSI 402/Gamesgiftshop/Views/Accounting/Refunds.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudGluZ1xSZWZ1bmRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/CSI 402/Gamesgiftshop/Views/Account/ForgotPassword.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxGb3Jnb3RQYXNzd29yZC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
@@ -53,6 +57,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [D:/CSI 402/Gamesgiftshop/Views/Account/Register.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxSZWdpc3Rlci5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/CSI 402/Gamesgiftshop/Views/Account/StaffProfile.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxTdGFmZlByb2ZpbGUuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/CSI 402/Gamesgiftshop/Views/Admin/Dashboard.cshtml]

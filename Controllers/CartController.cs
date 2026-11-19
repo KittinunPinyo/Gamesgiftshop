@@ -8,6 +8,8 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Gamesgiftshop.Models;
+using Gamesgiftshop.Services;
+using Microsoft.Extensions.Configuration;
 
 namespace Gamesgiftshop.Controllers
 {
@@ -43,14 +45,16 @@ namespace Gamesgiftshop.Controllers
     public class CartController : Controller
     {
         private readonly Csi402dbContext _db;
+        private readonly IConfiguration _configuration;
         private const string PromoSessionSuffix = "_PromoCode";
         private const string LoyaltySessionSuffix = "_LoyaltyPoints";
         private const string PromoMessageSessionKey = "PromoMessage";
         private static readonly string[] ClothingSizes = ProductSizeStock.AvailableSizes;
 
-        public CartController(Csi402dbContext db)
+        public CartController(Csi402dbContext db, IConfiguration configuration)
         {
             _db = db;
+            _configuration = configuration;
         }
 
         // ==========================================
@@ -352,6 +356,20 @@ namespace Gamesgiftshop.Controllers
                     return RedirectToAction("Details", "Product", new { id = productId });
                 }
             }
+            else
+            {
+                var currentProductQuantity = cart
+                    .Where(item => item.ProductId == productId)
+                    .Sum(item => (long)item.Quantity);
+                var availableStock = Math.Max(0, product.StockQuantity ?? 0);
+                if (currentProductQuantity + quantity > availableStock)
+                {
+                    TempData["CartError"] = availableStock == 0
+                        ? "สินค้าหมดชั่วคราว"
+                        : $"สินค้า {product.Name} มีสินค้าไม่เพียงพอ";
+                    return RedirectToAction("Details", "Product", new { id = productId });
+                }
+            }
 
             if (existingItem != null)
             {
@@ -386,14 +404,28 @@ namespace Gamesgiftshop.Controllers
             if (item != null)
             {
                 var product = _db.Products.FirstOrDefault(p => p.ProductId == productId);
-                if (string.Equals(item.Category, "เสื้อผ้า", StringComparison.OrdinalIgnoreCase) && quantity > item.Quantity)
+                if (quantity > item.Quantity)
                 {
-                    var availableSizeStock = product == null || string.IsNullOrWhiteSpace(item.Size)
+                    var isClothing = product != null &&
+                        string.Equals(product.Category, "เสื้อผ้า", StringComparison.OrdinalIgnoreCase);
+                    var matchingCartItems = cart.Where(cartItem =>
+                        cartItem.ProductId == productId && (!isClothing || cartItem.Size == item.Size));
+                    var otherQuantity = matchingCartItems.Sum(cartItem => (long)cartItem.Quantity) - item.Quantity;
+                    var availableStock = product == null
                         ? 0
-                        : GetClothingSizeStock(product, item.Size);
-                    if (quantity > availableSizeStock)
+                        : isClothing
+                            ? string.IsNullOrWhiteSpace(item.Size)
+                                ? 0
+                                : GetClothingSizeStock(product, item.Size)
+                            : Math.Max(0, product.StockQuantity ?? 0);
+
+                    if (otherQuantity + quantity > availableStock)
                     {
-                        TempData["CartError"] = $"ไซซ์ {item.Size} มีสินค้าไม่เพียงพอ";
+                        TempData["CartError"] = product == null
+                            ? "ไม่พบสินค้า กรุณาตรวจสอบตะกร้าอีกครั้ง"
+                            : isClothing
+                                ? $"ไซซ์ {item.Size} มีสินค้าไม่เพียงพอ"
+                                : $"สินค้า {product.Name} มีสินค้าไม่เพียงพอ";
                         return RedirectToAction(nameof(Index));
                     }
                 }
@@ -450,6 +482,9 @@ namespace Gamesgiftshop.Controllers
             if (!cartVM.Items.Any()) return RedirectToAction("Index");
             ViewBag.GrandTotal = cartVM.GrandTotal;
             ViewBag.Discount = cartVM.Discount;
+            var promptPayPayload = _configuration["PaymentSettings:PromptPayStaticPayload"]
+                ?? throw new InvalidOperationException("The PromptPay payment payload is not configured.");
+            ViewBag.PaymentQrCodeDataUrl = PromptPayQrCodeGenerator.GenerateDataUrl(promptPayPayload, cartVM.GrandTotal);
             return View();
         }
 

@@ -246,6 +246,47 @@ body.accounting-theme .accounting-content .btn-outline-danger {
     border-radius: 9px;
 }
 body.accounting-theme .accounting-content .alert { border-radius: 13px; }
+.accounting-pending-payment-badge {
+    display: inline-flex;
+    min-width: 22px;
+    height: 22px;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    padding: 0 7px;
+    color: #fff;
+    background: #c34252;
+    border-radius: 999px;
+    font-size: .75rem;
+    font-weight: 800;
+}
+.accounting-live-payment-notice {
+    position: fixed;
+    top: 90px;
+    right: 24px;
+    z-index: 1200;
+    display: flex;
+    max-width: min(460px, calc(100vw - 32px));
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    color: #684715;
+    background: #fff7e6;
+    border: 1px solid #e8c77f;
+    border-radius: 14px;
+    box-shadow: 0 12px 30px rgba(38, 55, 69, .16);
+}
+.accounting-live-payment-notice[hidden] { display: none; }
+.accounting-live-payment-notice > i { color: #b07d35; }
+.accounting-live-payment-notice a { color: #805a20; font-weight: 800; white-space: nowrap; }
+.accounting-live-payment-notice button {
+    padding: 0;
+    color: #684715;
+    background: none;
+    border: 0;
+    font-size: 1.35rem;
+    line-height: 1;
+}
 
 @media (max-width: 768px) {
     body.accounting-theme .accounting-sidebar {
@@ -290,6 +331,7 @@ body.accounting-theme .accounting-content .alert { border-radius: 13px; }
         margin-left: 0;
         padding: 22px 16px;
     }
+    .accounting-live-payment-notice { top: 78px; right: 12px; }
 }
 
 @media (max-width: 575.98px) {

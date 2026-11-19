@@ -1,0 +1,182 @@
+@model Gamesgiftshop.Models.AccountingRefundViewModel
+@{
+    Layout = "_AccountingLayout";
+    ViewData["Title"] = "คำขอคืนเงิน";
+    var evidenceIds = (HashSet<int>)ViewBag.RefundEvidenceIds;
+}
+
+<style>
+    .refund-status-completed {
+        display: inline-flex;
+        align-items: center;
+        align-self: flex-start;
+        gap: 6px;
+        padding: 6px 12px;
+        border: 1px solid #a9dec9;
+        border-radius: 999px;
+        background: #e8f7ef;
+        color: #176b4c;
+        font-size: .85rem;
+        font-weight: 700;
+        line-height: 1.4;
+        white-space: nowrap;
+    }
+</style>
+
+<div class="accounting-page-heading">
+    <div class="accounting-page-icon"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></div>
+    <div>
+        <div class="accounting-eyebrow">REFUND REQUESTS</div>
+        <h1 class="h3 fw-bold mb-1">คำขอคืนเงิน</h1>
+        <p>ตรวจสอบเหตุผล ตอบ Feedback และบันทึกผลการดำเนินการคืนเงิน</p>
+    </div>
+</div>
+
+@if (TempData["AccountingRefundSuccess"] != null)
+{
+    <div class="alert alert-success">@TempData["AccountingRefundSuccess"]</div>
+}
+@if (TempData["AccountingRefundError"] != null)
+{
+    <div class="alert alert-danger">@TempData["AccountingRefundError"]</div>
+}
+
+<div class="alert alert-info">
+    เมื่อเลือก “ยืนยันว่าโอนเงินคืนแล้ว” ระบบจะเปลี่ยนสถานะออเดอร์และหักยอดคืนเงินออกจากสรุปบัญชี
+</div>
+
+<section class="accounting-card p-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h2 class="h5 fw-bold mb-1">รายการคำขอ</h2>
+            <div class="small text-muted">รายการที่ต้องดำเนินการ @Model.PendingCount รายการ</div>
+        </div>
+        <span class="badge text-bg-warning">@Model.PendingCount ต้องดำเนินการ</span>
+    </div>
+
+    @if (Model.Requests.Count == 0)
+    {
+        <div class="text-center text-muted py-5">ยังไม่มีคำขอคืนเงิน</div>
+    }
+    else
+    {
+        <div class="d-grid gap-3">
+            @foreach (var request in Model.Requests)
+            {
+                var productSummary = string.Join(", ", request.Order.Orderdetails.Select(detail =>
+                    $"{detail.Product?.Name ?? $"สินค้า #{detail.ProductId}"} × {detail.Quantity}"));
+                <article class="border rounded-3 p-3">
+                    <div class="d-flex flex-wrap justify-content-between gap-2">
+                        <div>
+                            <h3 class="h6 fw-bold mb-1">ออเดอร์ #@request.OrderId</h3>
+                            <div class="small text-muted">
+                                @request.User.Username · ส่งคำขอ @request.RequestedAt.ToString("dd/MM/yyyy HH:mm")
+                            </div>
+                        </div>
+                        @if (request.Status == Gamesgiftshop.Models.RefundRequest.RefundedStatus)
+                        {
+                            <span class="refund-status-completed">
+                                <i class="fa-solid fa-circle-check" aria-hidden="true"></i> @request.Status
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge align-self-start @(request.Status == Gamesgiftshop.Models.RefundRequest.PendingStatus ? "text-bg-warning" : "text-bg-secondary")">
+                                @request.Status
+                            </span>
+                        }
+                    </div>
+                    <div class="mt-3"><strong>ยอด:</strong> ฿@request.Order.TotalAmount.ToString("N2")</div>
+                    <div><strong>สินค้า:</strong> @productSummary</div>
+                    <div class="mt-2"><strong>เหตุผล:</strong> @request.Reason</div>
+                    @if (evidenceIds.Contains(request.RefundRequestId))
+                    {
+                        <div class="mt-2">
+                            <a asp-action="RefundEvidence" asp-route-id="@request.RefundRequestId"
+                               target="_blank" rel="noopener noreferrer">ดูรูปหลักฐาน</a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="small text-muted mt-2">ไม่มีรูปหลักฐาน (คำขอเดิม)</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(request.ReturnAddress))
+                    {
+                        <div class="mt-2" style="white-space: pre-line"><strong>ที่อยู่ส่งคืน:</strong> @request.ReturnAddress</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(request.ReturnTrackingNumber))
+                    {
+                        <div class="mt-2"><strong>เลขพัสดุส่งคืน:</strong> @request.ReturnTrackingNumber</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(request.Feedback))
+                    {
+                        <div class="mt-2"><strong>Feedback:</strong> @request.Feedback</div>
+                    }
+
+                    @if (request.Status == Gamesgiftshop.Models.RefundRequest.PendingStatus ||
+                         request.Status == Gamesgiftshop.Models.RefundRequest.ReturnReceivedStatus)
+                    {
+                        <form asp-action="ReviewRefundRequest" method="post" class="mt-3"
+                              onsubmit="return confirm('ยืนยันบันทึกผลการพิจารณาคำขอคืนเงินนี้หรือไม่?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@request.RefundRequestId" />
+                            <label class="form-label" for="refund-feedback-@request.RefundRequestId">Feedback ถึงลูกค้า</label>
+                            <textarea class="form-control mb-3" id="refund-feedback-@request.RefundRequestId"
+                                      name="feedback" minlength="5" maxlength="1000" required rows="3"></textarea>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="submit" name="approve" value="true" class="btn btn-success">
+                                    <i class="fa-solid fa-check me-1" aria-hidden="true"></i> @(request.Status == Gamesgiftshop.Models.RefundRequest.PendingStatus ? "ไม่ต้องส่งคืน และยืนยันว่าโอนเงินคืนแล้ว" : "ยืนยันว่าโอนเงินคืนแล้ว")
+                                </button>
+                                <button type="submit" name="approve" value="false" class="btn btn-outline-danger">
+                                    ปฏิเสธคำขอ
+                                </button>
+                            </div>
+                        </form>
+                        @if (request.Status == Gamesgiftshop.Models.RefundRequest.PendingStatus)
+                        {
+                            <form asp-action="RequireReturn" method="post" class="mt-3 border-top pt-3">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@request.RefundRequestId" />
+                                <label class="form-label" for="return-address-@request.RefundRequestId">ที่อยู่สำหรับส่งคืนสินค้า</label>
+                                <textarea class="form-control mb-2" id="return-address-@request.RefundRequestId"
+                                          name="returnAddress" minlength="5" maxlength="1000" rows="2" required></textarea>
+                                <label class="form-label" for="return-feedback-@request.RefundRequestId">คำแนะนำถึงลูกค้า</label>
+                                <textarea class="form-control mb-2" id="return-feedback-@request.RefundRequestId"
+                                          name="feedback" minlength="5" maxlength="1000" rows="2" required></textarea>
+                                <button type="submit" class="btn btn-outline-primary">แจ้งให้ส่งคืนสินค้า</button>
+                            </form>
+                        }
+                    }
+                    else if (request.Status == Gamesgiftshop.Models.RefundRequest.ReturnShippedStatus)
+                    {
+                        <form asp-action="ConfirmReturnReceived" method="post" class="mt-3"
+                              onsubmit="return confirm('ยืนยันว่าได้รับและตรวจสอบสินค้าที่ส่งคืนแล้วหรือไม่?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@request.RefundRequestId" />
+                            <button type="submit" class="btn btn-outline-success">ยืนยันตรวจรับสินค้าแล้ว</button>
+                        </form>
+                    }
+                    else if (request.Status == Gamesgiftshop.Models.RefundRequest.RefundedStatus ||
+                             request.Status == Gamesgiftshop.Models.RefundRequest.RejectedStatus)
+                    {
+                        <div class="small text-muted mt-2">
+                            ตรวจสอบโดย @(request.ReviewedBy ?? "Accounting")
+                            @if (request.ReviewedAt.HasValue)
+                            {
+                                <span>เมื่อ @request.ReviewedAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                            }
+                        </div>
+                        @if (request.Status == Gamesgiftshop.Models.RefundRequest.RefundedStatus)
+                        {
+                            <a class="btn btn-outline-primary btn-sm mt-3"
+                               asp-action="RefundReceipt"
+                               asp-route-id="@request.RefundRequestId">
+                                <i class="fa-solid fa-file-pdf me-1" aria-hidden="true"></i> ดาวน์โหลดใบเสร็จคืนเงิน
+                            </a>
+                        }
+                    }
+                </article>
+            }
+        </div>
+    }
+</section>

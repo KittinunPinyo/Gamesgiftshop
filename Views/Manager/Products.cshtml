@@ -81,6 +81,16 @@
         font-size: 0.8rem;
         font-weight: 600;
     }
+
+    .product-category-badge {
+        display: inline-block;
+        background: #e2e8f0;
+        color: #4a5568;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
 </style>
 
 <div class="container-fluid mt-2">
@@ -126,8 +136,7 @@
                                 </td>
                                 <td class="text-start fw-bold">@item.Name</td>
                                 <td>
-                                    <span
-                                    style="background: #e2e8f0; color: #4a5568; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem;">@item.Category</span>
+                                    <span class="product-category-badge">@item.Category</span>
                                 </td>
                                 <td style="color: #38a169; font-weight: bold;">฿@item.Price</td>
                                 <td>

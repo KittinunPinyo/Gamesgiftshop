@@ -1,90 +1,803 @@
+/* ==========================================================================
+   ROLE HEADER - Unified Management Header for Admin, Manager, Staff, Accounting
+   ========================================================================== */
+
 .role-header {
     position: sticky;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 1100;
+    height: 76px;
     min-height: 76px;
-    background: #fff;
-    border-bottom: 1px solid #e3edf8;
-    box-shadow: 0 4px 16px rgba(27, 74, 126, .06);
+    max-height: 76px;
+    box-sizing: border-box;
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    font-family: 'Segoe UI', Tahoma, -apple-system, BlinkMacSystemFont, sans-serif;
+    transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
+/* --- Top Accent Bar --- */
+.role-header-accent-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3186f5, #1764d1);
+    z-index: 2;
+}
+
+/* --- Header Inner Container --- */
 .role-header-inner {
+    position: relative;
     display: flex;
-    min-height: 76px;
+    height: 73px;
+    min-height: 73px;
     align-items: center;
     justify-content: space-between;
-    gap: 20px;
-    padding: 10px clamp(16px, 3vw, 36px);
+    gap: 16px;
+    padding: 0 clamp(14px, 2.5vw, 32px);
+    box-sizing: border-box;
+}
+
+/* --- Left Section: Brand & Portal Badge --- */
+.role-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
 }
 
 .role-brand {
     display: inline-flex;
-    flex: 0 0 auto;
     align-items: center;
-    gap: 11px;
-    color: #173a61;
+    gap: 12px;
     text-decoration: none;
+    color: #1e293b;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
 }
 
-.role-brand:hover { color: #173a61; }
+.role-brand:hover {
+    color: #1e293b;
+    transform: translateY(-1px);
+}
 
 .role-brand-icon {
     display: grid;
-    width: 38px;
-    height: 38px;
     place-items: center;
-    color: #fff;
-    background: linear-gradient(145deg, #3186f5, #1764d1);
-    border-radius: 9px;
-    box-shadow: 0 5px 12px rgba(29, 103, 214, .2);
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    color: #ffffff;
+    font-size: 1.15rem;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
 }
 
-.role-brand-text { display: flex; flex-direction: column; line-height: 1.05; }
-.role-brand-title { font-size: 1.03rem; font-weight: 850; letter-spacing: .03em; }
-.role-brand-subtitle { margin-top: 3px; color: #7890aa; font-size: .68rem; font-weight: 700; letter-spacing: .12em; }
+.role-brand:hover .role-brand-icon {
+    transform: scale(1.06) rotate(-3deg);
+}
 
-.role-header-actions { display: flex; align-items: center; gap: 10px; }
-.role-profile-link,
-.role-logout-button {
+.role-brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+.role-brand-title {
+    font-size: 0.98rem;
+    font-weight: 850;
+    letter-spacing: 0.03em;
+    color: #0f172a;
+}
+
+.role-brand-subtitle {
+    margin-top: 3px;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+/* Divider between logo and role badge */
+.role-header-divider {
+    width: 1px;
+    height: 28px;
+    background: #e2e8f0;
+    flex-shrink: 0;
+}
+
+/* Portal Role Badge */
+.role-portal-badge {
     display: inline-flex;
-    min-height: 40px;
     align-items: center;
-    justify-content: center;
     gap: 8px;
-    padding: 8px 13px;
-    border-radius: 9px;
-    font: inherit;
-    font-size: .88rem;
+    padding: 6px 13px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    user-select: none;
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.role-portal-icon {
+    display: flex;
+    align-items: center;
+    font-size: 0.88rem;
+}
+
+.role-portal-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.role-portal-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    animation: roleStatusPulse 2.2s infinite ease-in-out;
+}
+
+@keyframes roleStatusPulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.25);
+        opacity: 0.65;
+    }
+}
+
+/* --- Right Section: Actions --- */
+.role-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+/* View Storefront Link */
+.role-store-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 10px;
+    font-size: 0.84rem;
     font-weight: 700;
     text-decoration: none;
+    color: #475569;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.role-external-icon {
+    font-size: 0.72rem;
+    opacity: 0.7;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.role-store-btn:hover {
+    color: #0f172a;
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+}
+
+.role-store-btn:hover .role-external-icon {
+    transform: translate(2px, -2px);
+    opacity: 1;
+}
+
+/* Profile Chip */
+.role-profile-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 44px;
+    padding: 3px 14px 3px 4px;
+    border-radius: 999px;
+    text-decoration: none;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.role-avatar-circle {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #64748b, #475569);
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.role-avatar-status {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #10b981;
+    border: 2px solid #ffffff;
+}
+
+.role-profile-info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+    max-width: 140px;
+}
+
+.role-profile-name {
+    font-size: 0.86rem;
+    font-weight: 750;
+    color: #1e293b;
     white-space: nowrap;
-    transition: background .18s ease, color .18s ease, border-color .18s ease;
-}
-
-.role-profile-link {
-    max-width: 230px;
     overflow: hidden;
-    color: #4b6784;
+    text-overflow: ellipsis;
 }
 
-.role-profile-link i { color: #54789f; font-size: 1.05rem; }
-.role-profile-link span { overflow: hidden; text-overflow: ellipsis; }
-.role-profile-link:hover { color: #1555b5; background: #edf5ff; }
-.role-logout-form { margin: 0; }
-.role-logout-button { color: #d64252; background: #fff; border: 1px solid #f1cbd0; cursor: pointer; }
-.role-logout-button:hover { color: #fff; background: #d64252; border-color: #d64252; }
+.role-profile-role {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
+.role-profile-chip:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+}
+
+/* Logout Button */
+.role-logout-form {
+    margin: 0;
+}
+
+.role-logout-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    color: #e11d48;
+    background: rgba(244, 63, 94, 0.06);
+    border: 1px solid rgba(244, 63, 94, 0.22);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.role-logout-button:hover {
+    color: #ffffff;
+    background: #e11d48;
+    border-color: #e11d48;
+    box-shadow: 0 4px 14px rgba(225, 29, 72, 0.28);
+    transform: translateY(-1px);
+}
+
+.role-logout-button:active {
+    transform: translateY(0);
+}
+
+
+/* ==========================================================================
+   THEME 1: ADMIN CONSOLE (Deep Violet, Indigo, Cyan Accent)
+   ========================================================================== */
+body.admin-theme .role-header,
+.role-header.role-header-admin {
+    background: linear-gradient(180deg, #ffffff 0%, #faf8fe 100%);
+    border-bottom: 1px solid #ebe5f8;
+    box-shadow: 0 4px 20px rgba(41, 33, 69, 0.05), 0 1px 3px rgba(105, 81, 197, 0.03);
+}
+
+body.admin-theme .role-header-accent-bar,
+.role-header.role-header-admin .role-header-accent-bar {
+    background: linear-gradient(90deg, #5236b8 0%, #7c5dfa 45%, #3ab8bd 100%);
+}
+
+body.admin-theme .role-brand-icon,
+.role-header.role-header-admin .role-brand-icon {
+    background: linear-gradient(135deg, #7c5dfa 0%, #5236b8 100%);
+    box-shadow: 0 4px 14px rgba(124, 93, 250, 0.38);
+}
+
+body.admin-theme .role-brand-title,
+.role-header.role-header-admin .role-brand-title {
+    color: #241e3d;
+}
+
+body.admin-theme .role-brand-subtitle,
+.role-header.role-header-admin .role-brand-subtitle {
+    color: #7c5dfa;
+}
+
+body.admin-theme .role-header-divider,
+.role-header.role-header-admin .role-header-divider {
+    background: #ebe5f8;
+}
+
+body.admin-theme .role-portal-badge,
+.role-header.role-header-admin .role-portal-badge {
+    background: linear-gradient(135deg, #f4effe 0%, #ece5fc 100%);
+    border-color: rgba(124, 93, 250, 0.28);
+    color: #593cb8;
+}
+
+body.admin-theme .role-store-btn,
+.role-header.role-header-admin .role-store-btn {
+    color: #593cb8;
+    background: rgba(124, 93, 250, 0.06);
+    border-color: rgba(124, 93, 250, 0.22);
+}
+
+body.admin-theme .role-store-btn:hover,
+.role-header.role-header-admin .role-store-btn:hover {
+    color: #ffffff;
+    background: #6951c5;
+    border-color: #6951c5;
+    box-shadow: 0 4px 14px rgba(105, 81, 197, 0.28);
+}
+
+body.admin-theme .role-profile-chip,
+.role-header.role-header-admin .role-profile-chip {
+    background: rgba(244, 239, 254, 0.65);
+    border-color: #ebe5f8;
+}
+
+body.admin-theme .role-profile-chip:hover,
+.role-header.role-header-admin .role-profile-chip:hover {
+    background: #f4effe;
+    border-color: rgba(124, 93, 250, 0.35);
+}
+
+body.admin-theme .role-avatar-circle,
+.role-header.role-header-admin .role-avatar-circle {
+    background: linear-gradient(135deg, #7c5dfa 0%, #5236b8 100%);
+    box-shadow: 0 2px 8px rgba(124, 93, 250, 0.3);
+}
+
+body.admin-theme .role-profile-name,
+.role-header.role-header-admin .role-profile-name {
+    color: #241e3d;
+}
+
+body.admin-theme .role-profile-role,
+.role-header.role-header-admin .role-profile-role {
+    color: #7c5dfa;
+}
+
+
+/* ==========================================================================
+   THEME 2: MANAGER PANEL (Royal Blue, Sapphire, Ocean Sky)
+   ========================================================================== */
+body.manager-theme .role-header,
+.role-header.role-header-manager {
+    background: linear-gradient(180deg, #ffffff 0%, #f6faff 100%);
+    border-bottom: 1px solid #dce8f5;
+    box-shadow: 0 4px 20px rgba(21, 85, 181, 0.05), 0 1px 3px rgba(29, 103, 214, 0.03);
+}
+
+body.manager-theme .role-header-accent-bar,
+.role-header.role-header-manager .role-header-accent-bar {
+    background: linear-gradient(90deg, #1555b5 0%, #1d67d6 50%, #38bdf8 100%);
+}
+
+body.manager-theme .role-brand-icon,
+.role-header.role-header-manager .role-brand-icon {
+    background: linear-gradient(135deg, #2b7af0 0%, #1555b5 100%);
+    box-shadow: 0 4px 14px rgba(29, 103, 214, 0.35);
+}
+
+body.manager-theme .role-brand-title,
+.role-header.role-header-manager .role-brand-title {
+    color: #173a61;
+}
+
+body.manager-theme .role-brand-subtitle,
+.role-header.role-header-manager .role-brand-subtitle {
+    color: #1d67d6;
+}
+
+body.manager-theme .role-header-divider,
+.role-header.role-header-manager .role-header-divider {
+    background: #dce8f5;
+}
+
+body.manager-theme .role-portal-badge,
+.role-header.role-header-manager .role-portal-badge {
+    background: linear-gradient(135deg, #edf5ff 0%, #e2effe 100%);
+    border-color: rgba(29, 103, 214, 0.28);
+    color: #1555b5;
+}
+
+body.manager-theme .role-store-btn,
+.role-header.role-header-manager .role-store-btn {
+    color: #1555b5;
+    background: rgba(29, 103, 214, 0.06);
+    border-color: rgba(29, 103, 214, 0.22);
+}
+
+body.manager-theme .role-store-btn:hover,
+.role-header.role-header-manager .role-store-btn:hover {
+    color: #ffffff;
+    background: #1d67d6;
+    border-color: #1d67d6;
+    box-shadow: 0 4px 14px rgba(29, 103, 214, 0.28);
+}
+
+body.manager-theme .role-profile-chip,
+.role-header.role-header-manager .role-profile-chip {
+    background: rgba(237, 245, 255, 0.65);
+    border-color: #dce8f5;
+}
+
+body.manager-theme .role-profile-chip:hover,
+.role-header.role-header-manager .role-profile-chip:hover {
+    background: #edf5ff;
+    border-color: rgba(29, 103, 214, 0.35);
+}
+
+body.manager-theme .role-avatar-circle,
+.role-header.role-header-manager .role-avatar-circle {
+    background: linear-gradient(135deg, #2b7af0 0%, #1555b5 100%);
+    box-shadow: 0 2px 8px rgba(29, 103, 214, 0.3);
+}
+
+body.manager-theme .role-profile-name,
+.role-header.role-header-manager .role-profile-name {
+    color: #173a61;
+}
+
+body.manager-theme .role-profile-role,
+.role-header.role-header-manager .role-profile-role {
+    color: #1d67d6;
+}
+
+
+/* ==========================================================================
+   THEME 3: STAFF PORTAL (Deep Teal, Mint, Ocean Cyan)
+   ========================================================================== */
+body.staff-theme .role-header,
+.role-header.role-header-staff {
+    background: linear-gradient(180deg, #ffffff 0%, #f4faf9 100%);
+    border-bottom: 1px solid #d7eae7;
+    box-shadow: 0 4px 20px rgba(8, 126, 131, 0.05), 0 1px 3px rgba(8, 126, 131, 0.03);
+}
+
+body.staff-theme .role-header-accent-bar,
+.role-header.role-header-staff .role-header-accent-bar {
+    background: linear-gradient(90deg, #07666b 0%, #087e83 50%, #2dd4bf 100%);
+}
+
+body.staff-theme .role-brand-icon,
+.role-header.role-header-staff .role-brand-icon {
+    background: linear-gradient(135deg, #0e9ba1 0%, #07666b 100%);
+    box-shadow: 0 4px 14px rgba(8, 126, 131, 0.35);
+}
+
+body.staff-theme .role-brand-title,
+.role-header.role-header-staff .role-brand-title {
+    color: #183b43;
+}
+
+body.staff-theme .role-brand-subtitle,
+.role-header.role-header-staff .role-brand-subtitle {
+    color: #087e83;
+}
+
+body.staff-theme .role-header-divider,
+.role-header.role-header-staff .role-header-divider {
+    background: #d7eae7;
+}
+
+body.staff-theme .role-portal-badge,
+.role-header.role-header-staff .role-portal-badge {
+    background: linear-gradient(135deg, #e7f7f4 0%, #d8f1ec 100%);
+    border-color: rgba(8, 126, 131, 0.28);
+    color: #07666b;
+}
+
+body.staff-theme .role-store-btn,
+.role-header.role-header-staff .role-store-btn {
+    color: #07666b;
+    background: rgba(8, 126, 131, 0.06);
+    border-color: rgba(8, 126, 131, 0.22);
+}
+
+body.staff-theme .role-store-btn:hover,
+.role-header.role-header-staff .role-store-btn:hover {
+    color: #ffffff;
+    background: #087e83;
+    border-color: #087e83;
+    box-shadow: 0 4px 14px rgba(8, 126, 131, 0.28);
+}
+
+body.staff-theme .role-profile-chip,
+.role-header.role-header-staff .role-profile-chip {
+    background: rgba(231, 247, 244, 0.65);
+    border-color: #d7eae7;
+}
+
+body.staff-theme .role-profile-chip:hover,
+.role-header.role-header-staff .role-profile-chip:hover {
+    background: #e7f7f4;
+    border-color: rgba(8, 126, 131, 0.35);
+}
+
+body.staff-theme .role-avatar-circle,
+.role-header.role-header-staff .role-avatar-circle {
+    background: linear-gradient(135deg, #0e9ba1 0%, #07666b 100%);
+    box-shadow: 0 2px 8px rgba(8, 126, 131, 0.3);
+}
+
+body.staff-theme .role-profile-name,
+.role-header.role-header-staff .role-profile-name {
+    color: #183b43;
+}
+
+body.staff-theme .role-profile-role,
+.role-header.role-header-staff .role-profile-role {
+    color: #087e83;
+}
+
+
+/* ==========================================================================
+   THEME 4: ACCOUNTING & FINANCE (Emerald Slate, Warm Amber Gold)
+   ========================================================================== */
+body.accounting-theme .role-header,
+.role-header.role-header-accounting {
+    background: linear-gradient(180deg, #ffffff 0%, #faf8f3 100%);
+    border-bottom: 1px solid #ece6da;
+    box-shadow: 0 4px 20px rgba(38, 56, 70, 0.05), 0 1px 3px rgba(196, 147, 75, 0.03);
+}
+
+body.accounting-theme .role-header-accent-bar,
+.role-header.role-header-accounting .role-header-accent-bar {
+    background: linear-gradient(90deg, #176b58 0%, #19745d 35%, #c4934b 70%, #d4a357 100%);
+}
+
+body.accounting-theme .role-brand-icon,
+.role-header.role-header-accounting .role-brand-icon {
+    background: linear-gradient(135deg, #d89f46 0%, #a27225 100%);
+    box-shadow: 0 4px 14px rgba(196, 147, 75, 0.38);
+}
+
+body.accounting-theme .role-brand-title,
+.role-header.role-header-accounting .role-brand-title {
+    color: #263745;
+}
+
+body.accounting-theme .role-brand-subtitle,
+.role-header.role-header-accounting .role-brand-subtitle {
+    color: #b07d35;
+}
+
+body.accounting-theme .role-header-divider,
+.role-header.role-header-accounting .role-header-divider {
+    background: #ece6da;
+}
+
+body.accounting-theme .role-portal-badge,
+.role-header.role-header-accounting .role-portal-badge {
+    background: linear-gradient(135deg, #faf4e6 0%, #f3e9d2 100%);
+    border-color: rgba(196, 147, 75, 0.32);
+    color: #8c5f1a;
+}
+
+body.accounting-theme .role-portal-status-dot,
+.role-header.role-header-accounting .role-portal-status-dot {
+    background: #176b58;
+    box-shadow: 0 0 0 3px rgba(23, 107, 88, 0.2);
+}
+
+body.accounting-theme .role-store-btn,
+.role-header.role-header-accounting .role-store-btn {
+    color: #176b58;
+    background: rgba(23, 107, 88, 0.06);
+    border-color: rgba(23, 107, 88, 0.22);
+}
+
+body.accounting-theme .role-store-btn:hover,
+.role-header.role-header-accounting .role-store-btn:hover {
+    color: #ffffff;
+    background: #176b58;
+    border-color: #176b58;
+    box-shadow: 0 4px 14px rgba(23, 107, 88, 0.28);
+}
+
+body.accounting-theme .role-profile-chip,
+.role-header.role-header-accounting .role-profile-chip {
+    background: rgba(250, 244, 230, 0.65);
+    border-color: #ece6da;
+}
+
+body.accounting-theme .role-profile-chip:hover,
+.role-header.role-header-accounting .role-profile-chip:hover {
+    background: #faf4e6;
+    border-color: rgba(196, 147, 75, 0.4);
+}
+
+body.accounting-theme .role-avatar-circle,
+.role-header.role-header-accounting .role-avatar-circle {
+    background: linear-gradient(135deg, #d89f46 0%, #a27225 100%);
+    box-shadow: 0 2px 8px rgba(196, 147, 75, 0.3);
+}
+
+body.accounting-theme .role-profile-name,
+.role-header.role-header-accounting .role-profile-name {
+    color: #263745;
+}
+
+body.accounting-theme .role-profile-role,
+.role-header.role-header-accounting .role-profile-role {
+    color: #b07d35;
+}
+
+
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+
+/* Tablets / Medium Screens */
+@media (max-width: 991.98px) {
+    .role-header-inner {
+        gap: 12px;
+        padding: 0 16px;
+    }
+
+    .role-header-divider {
+        display: none;
+    }
+
+    .role-portal-badge .role-portal-name {
+        display: none;
+    }
+
+    .role-portal-badge {
+        padding: 6px 10px;
+    }
+
+    .role-profile-info {
+        max-width: 100px;
+    }
+}
+
+/* Small Tablets & Mobile Landscape */
+@media (max-width: 767.98px) {
+    .role-header-inner {
+        gap: 8px;
+        padding: 0 12px;
+    }
+
+    .role-header-left {
+        gap: 8px;
+    }
+
+    .role-brand-subtitle {
+        display: none;
+    }
+
+    .role-portal-badge {
+        display: none;
+    }
+
+    .role-store-btn {
+        padding: 0 10px;
+    }
+
+    .role-store-text,
+    .role-external-icon {
+        display: none;
+    }
+
+    .role-profile-chip {
+        padding: 0;
+        border: none;
+        background: transparent !important;
+    }
+
+    .role-profile-info {
+        display: none;
+    }
+
+    .role-logout-button {
+        padding: 0 10px;
+    }
+
+    .role-logout-text {
+        display: none;
+    }
+}
+
+/* Mobile Portrait */
 @media (max-width: 575.98px) {
-    .role-header-inner { gap: 8px; padding: 9px 12px; }
-    .role-header-actions { gap: 2px; }
-    .role-profile-link,
-    .role-logout-button { gap: 6px; padding: 8px; font-size: .8rem; }
-    .role-profile-link { max-width: 48px; }
-    .role-profile-link span { display: none; }
+    .role-header {
+        height: 70px;
+        min-height: 70px;
+        max-height: 70px;
+    }
+
+    .role-header-inner {
+        height: 67px;
+        min-height: 67px;
+        padding: 0 10px;
+        gap: 6px;
+    }
+
+    .role-brand-icon {
+        width: 34px;
+        height: 34px;
+        font-size: 1rem;
+        border-radius: 9px;
+    }
+
+    .role-brand-title {
+        font-size: 0.88rem;
+    }
+
+    .role-header-actions {
+        gap: 6px;
+    }
+
+    .role-store-btn,
+    .role-logout-button {
+        height: 36px;
+        padding: 0 9px;
+        font-size: 0.8rem;
+        border-radius: 8px;
+    }
+
+    .role-avatar-circle {
+        width: 32px;
+        height: 32px;
+        font-size: 0.85rem;
+    }
+
+    .role-avatar-status {
+        width: 8px;
+        height: 8px;
+    }
 }
 
+/* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
     .role-header *,
     .role-header *::before,
-    .role-header *::after { transition-duration: .01ms !important; }
+    .role-header *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }

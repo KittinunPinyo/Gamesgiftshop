@@ -309,7 +309,13 @@
                                         }
                                     </div>
                                     
-                                    @if (string.Equals(item.Category, "เสื้อผ้า", StringComparison.OrdinalIgnoreCase))
+                                    @if ((item.StockQuantity ?? 0) <= 0)
+                                    {
+                                        <button type="button" class="btn btn-cart w-100" disabled>
+                                            <i class="fa-solid fa-box-open me-1"></i> สินค้าหมด
+                                        </button>
+                                    }
+                                    else if (string.Equals(item.Category, "เสื้อผ้า", StringComparison.OrdinalIgnoreCase))
                                     {
                                         <a href="/Product/Details/@item.ProductId" class="btn btn-cart text-center">
                                             <i class="fa-solid fa-shirt me-1"></i> เลือกไซซ์และหยิบใส่ตะกร้า

@@ -1,22 +1,125 @@
-<header class="role-header">
+@{
+    var currentController = ViewContext.RouteData.Values["Controller"]?.ToString() ?? string.Empty;
+    var currentAction = ViewContext.RouteData.Values["Action"]?.ToString() ?? string.Empty;
+
+    // ตรวจสอบ Portal ตาม Controller หรือ Fallback ตาม Role ของ User
+    string portalKey;
+    string portalRoleNameTh;
+    string portalRoleNameEn;
+    string portalBadgeIcon;
+
+    if (currentController.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+    {
+        portalKey = "admin";
+        portalRoleNameTh = "ผู้ดูแลระบบ";
+        portalRoleNameEn = "ADMIN CONSOLE";
+        portalBadgeIcon = "fa-solid fa-shield-halved";
+    }
+    else if (currentController.Equals("Manager", StringComparison.OrdinalIgnoreCase))
+    {
+        portalKey = "manager";
+        portalRoleNameTh = "ฝ่ายจัดการ";
+        portalRoleNameEn = "MANAGER PANEL";
+        portalBadgeIcon = "fa-solid fa-user-tie";
+    }
+    else if (currentController.Equals("Staff", StringComparison.OrdinalIgnoreCase))
+    {
+        portalKey = "staff";
+        portalRoleNameTh = "ฝ่ายปฏิบัติการ";
+        portalRoleNameEn = "STAFF PORTAL";
+        portalBadgeIcon = "fa-solid fa-boxes-stacked";
+    }
+    else if (currentController.Equals("Accounting", StringComparison.OrdinalIgnoreCase))
+    {
+        portalKey = "accounting";
+        portalRoleNameTh = "ฝ่ายบัญชีและการเงิน";
+        portalRoleNameEn = "ACCOUNTING & FINANCE";
+        portalBadgeIcon = "fa-solid fa-calculator";
+    }
+    else
+    {
+        if (User.IsInRole("Admin"))
+        {
+            portalKey = "admin";
+            portalRoleNameTh = "ผู้ดูแลระบบ";
+            portalRoleNameEn = "ADMIN CONSOLE";
+            portalBadgeIcon = "fa-solid fa-shield-halved";
+        }
+        else if (User.IsInRole("Manager"))
+        {
+            portalKey = "manager";
+            portalRoleNameTh = "ฝ่ายจัดการ";
+            portalRoleNameEn = "MANAGER PANEL";
+            portalBadgeIcon = "fa-solid fa-user-tie";
+        }
+        else if (User.IsInRole("Staff"))
+        {
+            portalKey = "staff";
+            portalRoleNameTh = "ฝ่ายปฏิบัติการ";
+            portalRoleNameEn = "STAFF PORTAL";
+            portalBadgeIcon = "fa-solid fa-boxes-stacked";
+        }
+        else if (User.IsInRole("Accounting") || User.IsInRole("Accountant"))
+        {
+            portalKey = "accounting";
+            portalRoleNameTh = "ฝ่ายบัญชีและการเงิน";
+            portalRoleNameEn = "ACCOUNTING & FINANCE";
+            portalBadgeIcon = "fa-solid fa-calculator";
+        }
+        else
+        {
+            portalKey = "general";
+            portalRoleNameTh = "ระบบงาน";
+            portalRoleNameEn = "MANAGEMENT PORTAL";
+            portalBadgeIcon = "fa-solid fa-gamepad";
+        }
+    }
+
+    var userName = User.Identity?.Name ?? "ผู้ใช้งาน";
+    var userInitial = !string.IsNullOrWhiteSpace(userName) ? userName.Substring(0, 1).ToUpper() : "U";
+}
+
+<header class="role-header role-header-@portalKey">
+    <div class="role-header-accent-bar" aria-hidden="true"></div>
     <div class="role-header-inner">
-        <a class="role-brand" asp-controller="Home" asp-action="Index" aria-label="GAMES GIFT SHOP หน้าแรก">
-            <span class="role-brand-icon"><i class="fa-solid fa-gamepad" aria-hidden="true"></i></span>
-            <span class="role-brand-text">
-                <span class="role-brand-title">GAMES</span>
-                <span class="role-brand-subtitle">GIFT SHOP</span>
-            </span>
-        </a>
+        <div class="role-header-left">
+            <a class="role-brand" asp-controller="Home" asp-action="Index" aria-label="GAMES GIFT SHOP หน้าแรก">
+                <span class="role-brand-icon">
+                    <i class="fa-solid fa-gamepad" aria-hidden="true"></i>
+                </span>
+                <span class="role-brand-text">
+                    <span class="role-brand-title">GAMES GIFT SHOP</span>
+                    <span class="role-brand-subtitle">@portalRoleNameEn</span>
+                </span>
+            </a>
+
+            <div class="role-header-divider" aria-hidden="true"></div>
+
+            <div class="role-portal-badge" title="ระบบ@portalRoleNameTh (@portalRoleNameEn)">
+                <span class="role-portal-icon"><i class="@portalBadgeIcon" aria-hidden="true"></i></span>
+                <span class="role-portal-label">
+                    <span class="role-portal-status-dot" aria-hidden="true"></span>
+                    <span class="role-portal-name">@portalRoleNameTh</span>
+                </span>
+            </div>
+        </div>
 
         <div class="role-header-actions">
-            <a class="role-profile-link" asp-controller="Account" asp-action="Profile" title="โปรไฟล์">
-                <i class="fa-solid fa-circle-user" aria-hidden="true"></i>
-                <span>@(User.Identity?.Name ?? "โปรไฟล์")</span>
+            <a class="role-profile-chip" asp-controller="Account" asp-action="StaffProfile" title="ดูข้อมูลบัญชีพนักงาน (@userName)">
+                <span class="role-avatar-circle">
+                    <span class="role-avatar-initial">@userInitial</span>
+                    <span class="role-avatar-status" title="ออนไลน์"></span>
+                </span>
+                <div class="role-profile-info">
+                    <span class="role-profile-name">@userName</span>
+                    <span class="role-profile-role">@portalRoleNameTh</span>
+                </div>
             </a>
+
             <form asp-controller="Account" asp-action="Logout" method="post" class="role-logout-form">
-                <button type="submit" class="role-logout-button">
-                    <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
-                    <span>ออกจากระบบ</span>
+                <button type="submit" class="role-logout-button" title="ออกจากระบบ">
+                    <i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i>
+                    <span class="role-logout-text">ออกจากระบบ</span>
                 </button>
             </form>
         </div>

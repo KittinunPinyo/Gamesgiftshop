@@ -1,3 +1,7 @@
+@{
+    var currentAction = ViewContext.RouteData.Values["Action"]?.ToString() ?? string.Empty;
+    var readyOrderCount = (int)(ViewBag.ReadyOrderCount ?? 0);
+}
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -36,15 +40,72 @@
             {
                 <li><a asp-controller="Admin" asp-action="Dashboard"><i class="fa-solid fa-shield-halved"></i><span>Admin Console</span></a></li>
             }
-            <li><a asp-controller="Staff" asp-action="Dashboard" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Dashboard" ? "active" : "")"><i class="fa-solid fa-clipboard-list"></i><span>จัดเตรียมคำสั่งซื้อ</span></a></li>
+            <li>
+                <a asp-controller="Staff" asp-action="Dashboard" class="@(currentAction == "Dashboard" ? "active" : "")">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                    <span>จัดเตรียมคำสั่งซื้อ</span>
+                    <span id="staff-ready-order-badge" class="staff-ready-order-badge @(readyOrderCount > 0 ? "" : "d-none")"
+                          data-latest-order-id="@((int)(ViewBag.LatestReadyOrderId ?? 0))">@readyOrderCount</span>
+                </a>
+            </li>
             <li><a asp-controller="Staff" asp-action="Inventory" class="@(ViewContext.RouteData.Values["Action"]?.ToString() == "Inventory" ? "active" : "")"><i class="fa-solid fa-boxes-stacked"></i><span>รับสินค้าเข้าคลัง</span></a></li>
         </ul>
     </nav>
+    <div id="staff-live-order-notice" class="staff-live-order-notice" role="status" aria-live="polite" hidden>
+        <i class="fa-solid fa-bell" aria-hidden="true"></i>
+        <span id="staff-live-order-message"></span>
+        <a asp-controller="Staff" asp-action="Dashboard">ดูออเดอร์</a>
+        <button id="staff-live-order-dismiss" type="button" aria-label="ปิดการแจ้งเตือน">&times;</button>
+    </div>
     <main class="staff-content">
         @RenderBody()
     </main>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (() => {
+            const badge = document.getElementById("staff-ready-order-badge");
+            const notice = document.getElementById("staff-live-order-notice");
+            const message = document.getElementById("staff-live-order-message");
+            const dismiss = document.getElementById("staff-live-order-dismiss");
+            const statusUrl = "@Url.Action("OrderStatus", "Staff")";
+            let latestOrderId = Number(badge.dataset.latestOrderId || "0");
+
+            dismiss.addEventListener("click", () => {
+                notice.hidden = true;
+            });
+
+            const refreshReadyOrders = async () => {
+                try {
+                    const response = await fetch(statusUrl, { headers: { "Accept": "application/json" } });
+                    if (!response.ok) throw new Error(`Ready order request failed: ${response.status}`);
+
+                    const status = await response.json();
+                    const nextCount = Number(status.pendingCount);
+                    const nextLatestOrderId = Number(status.latestOrderId);
+                    if (!Number.isInteger(nextCount) || nextCount < 0 ||
+                        !Number.isInteger(nextLatestOrderId) || nextLatestOrderId < 0) {
+                        throw new Error("Ready order response contained invalid order data.");
+                    }
+
+                    badge.textContent = nextCount;
+                    badge.dataset.latestOrderId = nextLatestOrderId;
+                    badge.classList.toggle("d-none", nextCount === 0);
+
+                    if (nextLatestOrderId > latestOrderId) {
+                        message.textContent = "มีออเดอร์ใหม่ที่ชำระเงินแล้ว รอจัดเตรียม";
+                        notice.hidden = false;
+                    }
+                    latestOrderId = nextLatestOrderId;
+                } catch (error) {
+                    console.error("Unable to refresh Staff order notifications.", error);
+                }
+            };
+
+            refreshReadyOrders();
+            window.setInterval(refreshReadyOrders, 30000);
+        })();
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

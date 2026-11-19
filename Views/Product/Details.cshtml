@@ -20,6 +20,12 @@
     bool inStock = availableStock > 0;
     var favoriteReturnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
     var clothingSizes = Gamesgiftshop.Models.ProductSizeStock.AvailableSizes;
+    var productReviews = ViewBag.ProductReviews as List<Gamesgiftshop.Models.ProductReviewDisplayViewModel>
+        ?? new List<Gamesgiftshop.Models.ProductReviewDisplayViewModel>();
+    var displayReviewCount = (int)(ViewBag.DisplayReviewCount ?? 0);
+    var displayRating = (decimal)(ViewBag.DisplayRating ?? 0m);
+    var hasReviewed = ViewBag.HasReviewed == true;
+    var hasPurchased = ViewBag.HasPurchased == true;
     
     var imageUrls = new List<string>();
     if (!string.IsNullOrEmpty(Model.ImageUrl))
@@ -357,6 +363,26 @@
         padding-left: 15px;
         color: #ffffff;
     }
+    .product-review-list { display: grid; gap: 14px; }
+    .product-review-card {
+        padding: 18px;
+        color: #334155;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+    }
+    .product-review-stars { color: #f59e0b; }
+    .review-rating-choice { color: #cbd5e1; }
+    .product-review-meta { color: #64748b; font-size: .85rem; }
+    .product-review-comment { margin: 12px 0 0; white-space: pre-line; overflow-wrap: anywhere; }
+    .review-rating-options { display: flex; flex-direction: row-reverse; justify-content: flex-end; gap: 8px; }
+    .review-rating-choice { position: relative; cursor: pointer; font-size: 1.6rem; line-height: 1; }
+    .review-rating-choice input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+    .review-rating-choice:has(input:checked),
+    .review-rating-choice:has(input:checked) ~ .review-rating-choice,
+    .review-rating-choice:hover,
+    .review-rating-choice:hover ~ .review-rating-choice { color: #f59e0b; }
+    .review-rating-choice input:focus-visible + span { outline: 2px solid #2563eb; outline-offset: 3px; border-radius: 2px; }
 </style>
 
 <div class="container detail-container">
@@ -400,8 +426,13 @@
             <h1 class="product-title">@Model.Name</h1>
             
             <div class="rating-box">
-                <div class="stars">★★★★★</div>
-                <div class="review-count">@Model.ReviewCount รีวิวจากผู้ซื้อจริง</div>
+                <div class="stars" aria-label="คะแนนเฉลี่ย @displayRating.ToString("0.0") จาก 5">
+                    @for (var star = 1; star <= 5; star++)
+                    {
+                        <i class="fa-solid fa-star @(displayRating >= star ? "" : "text-secondary opacity-50")" aria-hidden="true"></i>
+                    }
+                </div>
+                <div class="review-count">@displayRating.ToString("0.0") · @displayReviewCount รีวิวจากผู้ซื้อจริง</div>
             </div>
 
             <div class="price-box">
@@ -452,9 +483,9 @@
                 
                 <div class="mb-2 fw-bold" style="color: #cbd5e1; font-size: 0.95rem;">ระบุจำนวน</div>
                 <div class="qty-selector">
-                    <button type="button" class="qty-btn" onclick="updateQty(-1)">-</button>
+                    <button type="button" class="qty-btn" onclick="updateQty(-1)" @(inStock ? "" : "disabled")>-</button>
                     <input type="text" id="qtyInput" name="quantity" class="qty-input" value="1" max="@availableStock" readonly>
-                    <button type="button" class="qty-btn" onclick="updateQty(1)">+</button>
+                    <button type="button" class="qty-btn" onclick="updateQty(1)" @(inStock ? "" : "disabled")>+</button>
                 </div>
 
                 <div class="action-buttons">
@@ -505,6 +536,89 @@
         <div style="color: #cbd5e1; line-height: 1.8; font-size: 1.05rem; white-space: pre-line;">
             @(string.IsNullOrEmpty(Model.WarrantyInfo) ? "ไม่มีข้อมูลการรับประกัน" : Model.WarrantyInfo)
         </div>
+
+        <section id="reviews" class="mt-5" aria-labelledby="product-reviews-heading">
+            <h3 id="product-reviews-heading" class="detail-heading">รีวิวจากผู้ซื้อ</h3>
+
+            @if (TempData["ReviewSuccess"] != null)
+            {
+                <div class="alert alert-success">@TempData["ReviewSuccess"]</div>
+            }
+            @if (TempData["ReviewError"] != null)
+            {
+                <div class="alert alert-danger">@TempData["ReviewError"]</div>
+            }
+
+            @if (productReviews.Count == 0)
+            {
+                <p class="text-muted">ยังไม่มีรีวิวสำหรับสินค้านี้</p>
+            }
+            else
+            {
+                <div class="product-review-list mb-4">
+                    @foreach (var review in productReviews)
+                    {
+                        <article class="product-review-card">
+                            <div class="d-flex flex-wrap justify-content-between gap-2">
+                                <strong>@review.Username</strong>
+                                <time class="product-review-meta" datetime="@review.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss")">
+                                    @review.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                </time>
+                            </div>
+                            <div class="product-review-stars" aria-label="@review.Rating จาก 5 ดาว">
+                                @for (var star = 1; star <= 5; star++)
+                                {
+                                    <i class="fa-solid fa-star @(star <= review.Rating ? "" : "text-secondary opacity-50")" aria-hidden="true"></i>
+                                }
+                            </div>
+                            <p class="product-review-comment">@review.Comment</p>
+                        </article>
+                    }
+                </div>
+            }
+
+            @if (User.IsInRole("User"))
+            {
+                if (!hasPurchased)
+                {
+                    <div class="alert alert-info mb-0">เขียนรีวิวได้หลังจากสั่งซื้อสินค้านี้และชำระเงินแล้ว</div>
+                }
+                else if (hasReviewed)
+                {
+                    <div class="alert alert-info mb-0">คุณได้รีวิวสินค้านี้แล้ว ขอบคุณสำหรับความคิดเห็น</div>
+                }
+                else
+                {
+                    <form asp-controller="Product" asp-action="Review" method="post" class="product-review-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="productId" value="@Model.ProductId" />
+                        <div class="form-label fw-bold">ให้คะแนนสินค้า</div>
+                        <div class="review-rating-options mb-3" role="radiogroup" aria-label="ให้คะแนนสินค้า">
+                            @for (var star = 5; star >= 1; star--)
+                            {
+                                <label class="review-rating-choice">
+                                    <input type="radio" name="rating" value="@star" required />
+                                    <span aria-hidden="true">★</span>
+                                    <span class="visually-hidden">@star ดาว</span>
+                                </label>
+                            }
+                        </div>
+                        <label class="form-label fw-bold" for="review-comment">ความคิดเห็น</label>
+                        <textarea id="review-comment" name="comment" class="form-control mb-3" rows="4"
+                                  maxlength="1000" required placeholder="แบ่งปันประสบการณ์การใช้สินค้านี้"></textarea>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-paper-plane me-2" aria-hidden="true"></i>ส่งรีวิว
+                        </button>
+                    </form>
+                }
+            }
+            else if (User.Identity?.IsAuthenticated != true)
+            {
+                <a class="btn btn-outline-primary" asp-controller="Account" asp-action="Login">
+                    เข้าสู่ระบบเพื่อเขียนรีวิว
+                </a>
+            }
+        </section>
     </div>
 </div>
 

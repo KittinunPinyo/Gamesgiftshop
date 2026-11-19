@@ -54,6 +54,13 @@
 {
     <div class="alert alert-success">@TempData["StaffSuccess"]</div>
 }
+@if (readyToPackCount > 0)
+{
+    <div class="alert alert-warning d-flex align-items-center gap-2" role="alert">
+        <i class="fa-solid fa-bell" aria-hidden="true"></i>
+        <span>มี @readyToPackCount ออเดอร์รอจัดเตรียม กรุณาเริ่ม Pick &amp; Pack</span>
+    </div>
+}
 
 @if (!orders.Any())
 {
