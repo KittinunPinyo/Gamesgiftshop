@@ -15,10 +15,15 @@ builder.Services.AddSession(options => {
     options.Cookie.IsEssential = true;
 });
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+    throw new InvalidOperationException("Set ConnectionStrings:DefaultConnection using user secrets or an environment variable.");
+var serverVersion = ServerVersion.AutoDetect(connectionString);
+
 builder.Services.AddDbContext<Csi402dbContext>(
     options => options.UseMySql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
+        connectionString,
+        serverVersion
     )
 );
 
