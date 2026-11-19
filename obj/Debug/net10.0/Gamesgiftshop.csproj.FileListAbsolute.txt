@@ -397,7 +397,6 @@ C:\Users\User\AppData\Local\Temp\Gamesgiftshop-manager-theme-build\Gamesgiftshop
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-manager-theme-build\Gamesgiftshop.runtimeconfig.json
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-manager-theme-build\Gamesgiftshop.dll
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-manager-theme-build\Gamesgiftshop.pdb
-D:\CSI 402\Gamesgiftshop\obj\Debug\net10.0\compressed\p4u0opa09g-{0}-q9682zqohh-q9682zqohh.gz
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-manager-final-build\appsettings.Development.json
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-manager-final-build\appsettings.json
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-manager-final-build\Gamesgiftshop.staticwebassets.runtime.json
@@ -416,7 +415,6 @@ C:\Users\User\AppData\Local\Temp\Gamesgiftshop-staff-theme-build\Gamesgiftshop.d
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-staff-theme-build\Gamesgiftshop.runtimeconfig.json
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-staff-theme-build\Gamesgiftshop.dll
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-staff-theme-build\Gamesgiftshop.pdb
-D:\CSI 402\Gamesgiftshop\obj\Debug\net10.0\compressed\iusu09lx68-{0}-zg89sqlk37-zg89sqlk37.gz
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-accounting-theme-build\appsettings.Development.json
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-accounting-theme-build\appsettings.json
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-accounting-theme-build\Gamesgiftshop.staticwebassets.runtime.json
@@ -426,7 +424,6 @@ C:\Users\User\AppData\Local\Temp\Gamesgiftshop-accounting-theme-build\Gamesgifts
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-accounting-theme-build\Gamesgiftshop.runtimeconfig.json
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-accounting-theme-build\Gamesgiftshop.dll
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-accounting-theme-build\Gamesgiftshop.pdb
-D:\CSI 402\Gamesgiftshop\obj\Debug\net10.0\compressed\5qvrybks5w-{0}-4zfrjt83le-4zfrjt83le.gz
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-admin-build\appsettings.Development.json
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-admin-build\appsettings.json
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-admin-build\Gamesgiftshop.staticwebassets.runtime.json
@@ -436,7 +433,6 @@ C:\Users\User\AppData\Local\Temp\Gamesgiftshop-admin-build\Gamesgiftshop.deps.js
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-admin-build\Gamesgiftshop.runtimeconfig.json
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-admin-build\Gamesgiftshop.dll
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-admin-build\Gamesgiftshop.pdb
-D:\CSI 402\Gamesgiftshop\obj\Debug\net10.0\compressed\95lq4q8bhg-{0}-97si6ufay6-97si6ufay6.gz
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-user-management-build\appsettings.Development.json
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-user-management-build\appsettings.json
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-user-management-build\Gamesgiftshop.staticwebassets.runtime.json
@@ -618,3 +614,17 @@ C:\Users\User\AppData\Local\Temp\Gamesgiftshop-size-stock-runtime\Gamesgiftshop.
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-size-stock-runtime\Gamesgiftshop.runtimeconfig.json
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-size-stock-runtime\Gamesgiftshop.dll
 C:\Users\User\AppData\Local\Temp\Gamesgiftshop-size-stock-runtime\Gamesgiftshop.pdb
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-role-header-build\appsettings.Development.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-role-header-build\appsettings.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-role-header-build\Gamesgiftshop.staticwebassets.runtime.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-role-header-build\Gamesgiftshop.staticwebassets.endpoints.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-role-header-build\Gamesgiftshop.exe
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-role-header-build\Gamesgiftshop.deps.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-role-header-build\Gamesgiftshop.runtimeconfig.json
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-role-header-build\Gamesgiftshop.dll
+C:\Users\User\AppData\Local\Temp\Gamesgiftshop-role-header-build\Gamesgiftshop.pdb
+D:\CSI 402\Gamesgiftshop\obj\Debug\net10.0\compressed\otey84k61x-{0}-nmi74j51bv-nmi74j51bv.gz
+D:\CSI 402\Gamesgiftshop\obj\Debug\net10.0\compressed\5qvrybks5w-{0}-mi5u8rxxj1-mi5u8rxxj1.gz
+D:\CSI 402\Gamesgiftshop\obj\Debug\net10.0\compressed\95lq4q8bhg-{0}-gy0f1bkt9w-gy0f1bkt9w.gz
+D:\CSI 402\Gamesgiftshop\obj\Debug\net10.0\compressed\p4u0opa09g-{0}-4z5z090yd7-4z5z090yd7.gz
+D:\CSI 402\Gamesgiftshop\obj\Debug\net10.0\compressed\iusu09lx68-{0}-oij67eumjx-oij67eumjx.gz

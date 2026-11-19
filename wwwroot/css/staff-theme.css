@@ -256,6 +256,7 @@ body.staff-theme .staff-content .text-bg-secondary {
 @media (max-width: 768px) {
     body.staff-theme .staff-sidebar {
         position: relative;
+        inset: auto;
         width: 100%;
         height: auto;
         box-shadow: 0 8px 24px rgba(13, 69, 76, .13);

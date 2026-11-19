@@ -16,7 +16,7 @@
         body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, sans-serif; overflow-x: hidden; }
         
         .sidebar {
-            height: 100vh; width: 260px; position: fixed; top: 0; left: 0;
+            height: calc(100vh - 76px); width: 260px; position: fixed; top: 76px; left: 0;
             background-color: #4a3b8c; color: #fff; display: flex; flex-direction: column;
             box-shadow: 4px 0 15px rgba(0,0,0,0.1); z-index: 1000;
         }
@@ -42,8 +42,11 @@
         .sidebar-footer { border-top: 1px solid rgba(255,255,255,0.1); padding: 10px 0; }
         .main-content { margin-left: 260px; padding: 30px; min-height: 100vh; background-color: #f8f9fa; }
     </style>
+    <link rel="stylesheet" href="~/css/role-header.css" asp-append-version="true" />
 </head>
 <body class="manager-theme">
+    @await Html.PartialAsync("_RoleHeader")
+
     <!-- Sidebar Menu -->
     <nav class="sidebar">
         <div class="sidebar-header">
@@ -84,15 +87,6 @@
                 </a>
             </li>
         </ul>
-        <div class="sidebar-footer">
-            <ul class="sidebar-menu" style="padding: 0;">
-                <li>
-                    <a href="/Account/Logout" style="color: #ff6b6b;">
-                        <i class="fa-solid fa-sign-out-alt"></i> <span>ออกจากระบบ</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
     </nav>
 
     <!-- Main Content -->

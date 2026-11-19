@@ -250,6 +250,7 @@ body.accounting-theme .accounting-content .alert { border-radius: 13px; }
 @media (max-width: 768px) {
     body.accounting-theme .accounting-sidebar {
         position: relative;
+        inset: auto;
         width: 100%;
         height: auto;
         box-shadow: 0 8px 24px rgba(32, 54, 65, .12);

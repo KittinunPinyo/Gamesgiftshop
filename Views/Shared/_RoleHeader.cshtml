@@ -1,0 +1,24 @@
+<header class="role-header">
+    <div class="role-header-inner">
+        <a class="role-brand" asp-controller="Home" asp-action="Index" aria-label="GAMES GIFT SHOP หน้าแรก">
+            <span class="role-brand-icon"><i class="fa-solid fa-gamepad" aria-hidden="true"></i></span>
+            <span class="role-brand-text">
+                <span class="role-brand-title">GAMES</span>
+                <span class="role-brand-subtitle">GIFT SHOP</span>
+            </span>
+        </a>
+
+        <div class="role-header-actions">
+            <a class="role-profile-link" asp-controller="Account" asp-action="Profile" title="โปรไฟล์">
+                <i class="fa-solid fa-circle-user" aria-hidden="true"></i>
+                <span>@(User.Identity?.Name ?? "โปรไฟล์")</span>
+            </a>
+            <form asp-controller="Account" asp-action="Logout" method="post" class="role-logout-form">
+                <button type="submit" class="role-logout-button">
+                    <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+                    <span>ออกจากระบบ</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</header>

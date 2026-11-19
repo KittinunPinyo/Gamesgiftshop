@@ -1,0 +1,90 @@
+.role-header {
+    position: sticky;
+    top: 0;
+    z-index: 1100;
+    min-height: 76px;
+    background: #fff;
+    border-bottom: 1px solid #e3edf8;
+    box-shadow: 0 4px 16px rgba(27, 74, 126, .06);
+}
+
+.role-header-inner {
+    display: flex;
+    min-height: 76px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 10px clamp(16px, 3vw, 36px);
+}
+
+.role-brand {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 11px;
+    color: #173a61;
+    text-decoration: none;
+}
+
+.role-brand:hover { color: #173a61; }
+
+.role-brand-icon {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    color: #fff;
+    background: linear-gradient(145deg, #3186f5, #1764d1);
+    border-radius: 9px;
+    box-shadow: 0 5px 12px rgba(29, 103, 214, .2);
+}
+
+.role-brand-text { display: flex; flex-direction: column; line-height: 1.05; }
+.role-brand-title { font-size: 1.03rem; font-weight: 850; letter-spacing: .03em; }
+.role-brand-subtitle { margin-top: 3px; color: #7890aa; font-size: .68rem; font-weight: 700; letter-spacing: .12em; }
+
+.role-header-actions { display: flex; align-items: center; gap: 10px; }
+.role-profile-link,
+.role-logout-button {
+    display: inline-flex;
+    min-height: 40px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 13px;
+    border-radius: 9px;
+    font: inherit;
+    font-size: .88rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background .18s ease, color .18s ease, border-color .18s ease;
+}
+
+.role-profile-link {
+    max-width: 230px;
+    overflow: hidden;
+    color: #4b6784;
+}
+
+.role-profile-link i { color: #54789f; font-size: 1.05rem; }
+.role-profile-link span { overflow: hidden; text-overflow: ellipsis; }
+.role-profile-link:hover { color: #1555b5; background: #edf5ff; }
+.role-logout-form { margin: 0; }
+.role-logout-button { color: #d64252; background: #fff; border: 1px solid #f1cbd0; cursor: pointer; }
+.role-logout-button:hover { color: #fff; background: #d64252; border-color: #d64252; }
+
+@media (max-width: 575.98px) {
+    .role-header-inner { gap: 8px; padding: 9px 12px; }
+    .role-header-actions { gap: 2px; }
+    .role-profile-link,
+    .role-logout-button { gap: 6px; padding: 8px; font-size: .8rem; }
+    .role-profile-link { max-width: 48px; }
+    .role-profile-link span { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .role-header *,
+    .role-header *::before,
+    .role-header *::after { transition-duration: .01ms !important; }
+}
