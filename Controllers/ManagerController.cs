@@ -63,7 +63,7 @@ namespace Gamesgiftshop.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Product product, List<string> ImageUrls, Dictionary<string, int>? sizeStocks)
+        public IActionResult Create(Product product, List<string> ImageUrls, [Bind(Prefix = "sizeStocks")] Dictionary<string, int>? sizeStocks)
         {
             Dictionary<string, int>? normalizedSizeStocks = null;
             if (IsClothing(product.Category))
@@ -151,7 +151,7 @@ namespace Gamesgiftshop.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, Product data, List<string> ImageUrls, Dictionary<string, int>? sizeStocks)
+        public IActionResult Edit(int id, Product data, List<string> ImageUrls, [Bind(Prefix = "sizeStocks")] Dictionary<string, int>? sizeStocks)
         {
             if (id != data.ProductId)
             {
